@@ -1,33 +1,31 @@
-const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://crm-pb-web.onrender.com';
 let clientes = [];
 let paginaAtual = 1;
 const clientesPorPagina = 10;
 
 function renderNavbar() {
+  console.log('Rendering navbar');
   const permissao = localStorage.getItem('permissao');
   const navbarLinks = document.getElementById('navbarLinks');
   if (!navbarLinks) {
     console.error('Elemento navbarLinks não encontrado');
     return;
   }
+  console.log('Permissao:', permissao);
 
   const currentPage = window.location.pathname.split('/').pop() || 'index.html';
   let linksHtml = '';
 
-  // Links comuns (Gestor e Gerente)
   linksHtml += `
     <a class="nav-link${currentPage === 'index.html' ? ' active' : ''}" href="index.html">Clientes</a>
     <a class="nav-link${currentPage === 'ocorrencias-gestor.html' ? ' active' : ''}" href="ocorrencias-gestor.html">Ocorrências Gestor</a>
   `;
 
-  // Link exclusivo para Gerente
   if (permissao === 'Gerente') {
     linksHtml += `
       <a class="nav-link${currentPage === 'historico-ocorrencias.html' ? ' active' : ''}" href="historico-ocorrencias.html">Histórico de Ocorrências</a>
     `;
   }
 
-  // Botão Sair
   linksHtml += `
     <button class="btn btn-outline-danger btn-sm" onclick="logout()">Sair</button>
   `;
@@ -42,6 +40,7 @@ function logout() {
 }
 
 async function renderizarClientes() {
+  console.log('Rendering clients');
   const clientesBody = document.getElementById('clientesBody');
   const paginacaoInfo = document.getElementById('paginacaoInfo');
   if (!clientesBody || !paginacaoInfo) {
@@ -51,7 +50,15 @@ async function renderizarClientes() {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/clientes`);
+    const token = localStorage.getItem('token');
+    console.log('Token:', token ? 'Present' : 'Missing');
+    const response = await fetch(`${API_BASE_URL}/api/clientes`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log('Clientes response:', response.status);
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
@@ -136,7 +143,10 @@ function importarClientes(files) {
       if (confirm(`Deseja importar ${importedData.length} clientes? Isso substituirá ou atualizará clientes existentes com base no código.`)) {
         fetch(`${API_BASE_URL}/api/clientes/import`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
           body: JSON.stringify(importedData)
         })
         .then(response => {
@@ -208,7 +218,10 @@ function editarCliente(id) {
 function excluirCliente(id) {
   if (confirm('Deseja excluir este cliente?')) {
     fetch(`${API_BASE_URL}/api/clientes/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
     })
     .then(response => response.json())
     .then(result => {
@@ -344,7 +357,10 @@ function inicializarEventos() {
       const url = id ? `${API_BASE_URL}/api/clientes/${id}` : `${API_BASE_URL}/api/clientes`;
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify(cliente)
       });
       const result = await response.json();
