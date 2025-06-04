@@ -41,7 +41,7 @@ function carregarOcorrencias() {
         return response.json();
       })
       .then(data => {
-        console.log('Dados recebidos:', data); // Depuração
+        console.log('Dados recebidos:', data);
         ocorrencias = data;
         atualizarTabela();
         resolve();
@@ -136,7 +136,6 @@ async function gerarRelatorio() {
     return;
   }
 
-  // Garantir que ocorrencias está carregada
   try {
     await carregarOcorrencias();
   } catch (error) {
@@ -145,19 +144,24 @@ async function gerarRelatorio() {
   }
 
   const relatorioSetor = document.getElementById('relatorioSetor').value;
-  console.log('Setor selecionado:', relatorioSetor); // Depuração
+  console.log('Setor selecionado:', relatorioSetor);
   const ocorrenciasFiltradas = relatorioSetor
     ? ocorrencias.filter(o => o.setor === relatorioSetor)
     : ocorrencias;
 
-  console.log('Ocorrências filtradas:', ocorrenciasFiltradas); // Depuração
+  console.log('Ocorrências filtradas:', ocorrenciasFiltradas);
   if (ocorrenciasFiltradas.length === 0) {
     showErrorToast(`Nenhuma ocorrência encontrada para o setor ${relatorioSetor || 'selecionado'}.`);
     return;
   }
 
-  const relatorioContent = document.getElementById('relatorioContent');
-  relatorioContent.innerHTML = `
+  // Criar elemento temporário visível
+  const tempContainer = document.createElement('div');
+  tempContainer.style.position = 'absolute';
+  tempContainer.style.left = '-9999px'; // Fora da tela, mas visível para html2canvas
+  document.body.appendChild(tempContainer);
+
+  tempContainer.innerHTML = `
     <div style="padding: 20px; font-family: Arial, sans-serif;">
       <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 16px;">Relatório de Ocorrências${relatorioSetor ? ' - Setor: ' + relatorioSetor : ''}</h1>
       <p style="margin-bottom: 16px;">Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>
@@ -186,12 +190,13 @@ async function gerarRelatorio() {
     </div>
   `;
 
-  console.log('Conteúdo do relatório:', relatorioContent.innerHTML); // Depuração
+  console.log('Conteúdo do relatório (tempContainer):', tempContainer.innerHTML);
 
-  // Forçar renderização
+  // Forçar reflow do DOM
   await new Promise(resolve => {
     requestAnimationFrame(() => {
-      setTimeout(resolve, 500);
+      document.body.offsetHeight; // Forçar reflow
+      setTimeout(resolve, 1000); // Aumentar atraso
     });
   });
 
@@ -199,16 +204,18 @@ async function gerarRelatorio() {
     margin: 0.5,
     filename: `relatorio_ocorrencias${relatorioSetor ? '_' + relatorioSetor.toLowerCase() : ''}_${new Date().toISOString().slice(0,10)}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: `in`, format: `a4`, orientation: `landscape` }
   };
 
   try {
-    await html2pdf().set(opt).from(relatorioContent).save();
+    await html2pdf().set(opt).from(tempContainer).save();
     console.log('PDF gerado com sucesso');
   } catch (error) {
     console.error('Erro ao gerar PDF:', error);
     showErrorToast('Erro ao gerar relatório.');
+  } finally {
+    document.body.removeChild(tempContainer); // Limpar elemento temporário
   }
 }
 
