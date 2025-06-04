@@ -36,12 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const tipoAdvertenciaSelect = document.getElementById('tipo_advertencia');
   const clienteComunicadoSelect = document.getElementById('cliente_comunicado');
   const meioComunicacaoContainer = document.getElementById('meio_comunicacao_container');
-  const comunicacaoOutroContainer = document.getElementById('comunicacao_outro');
+  const comunicacaoOutroContainer = document.getElementById('comunicacao_outro_container');
   const meioComunicacaoSelect = document.getElementById('meio_comunicacao');
 
   advertidoSelect.addEventListener('change', () => {
     tipoAdvertenciaContainer.style.display = advertidoSelect.value === 'Sim' ? 'block' : 'none';
-    advertenciaOutraContainer.style.display = advertidoSelect.value === 'Outra' && advertidoSelect.value === 'Sim' ? 'block' : 'none';
+    advertenciaOutraContainer.style.display = advertidoSelect.value === 'Sim' && tipoAdvertenciaSelect.value === 'Outra' ? 'block' : 'none';
   });
 
   tipoAdvertenciaSelect.addEventListener('change', () => {
@@ -50,10 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   clienteComunicadoSelect.addEventListener('change', () => {
     meioComunicacaoContainer.style.display = clienteComunicadoSelect.value === 'Sim' ? 'block' : 'none';
-    comunicacaoOutroContainer.style.display = meioComunicacaoSelect.value === 'Outro' && clienteComunicadoSelect.value === 'Sim' ? 'block' : 'none';
+    comunicacaoOutroContainer.style.display = clienteComunicadoSelect.value === 'Sim' && meioComunicacaoSelect.value === 'Outro' ? 'block' : 'none';
   });
 
-  meioSelectComunicacaoSelect.addEventListener('change', () => {
+  meioComunicacaoSelect.addEventListener('change', () => {
     comunicacaoOutroContainer.style.display = meioComunicacaoSelect.value === 'Outro' ? 'block' : 'none';
   });
 
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api}/ocorrencias`, {
+      const response = await fetch(`${API_BASE_URL}/api/ocorrencias`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
