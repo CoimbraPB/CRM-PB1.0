@@ -1,15 +1,13 @@
-const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://crm-pb-web.onrender.com';
-
 function checkAuth() {
+  console.log('Checking auth');
   const token = localStorage.getItem('token');
   const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-
+  console.log('Token:', token ? 'Present' : 'Missing', 'Current page:', currentPage);
   if (!token && currentPage !== 'login.html') {
-    // Salvar a URL atual para redirecionamento após login
     const redirectUrl = window.location.href;
+    console.log('Redirecting to login with:', redirectUrl);
     window.location.href = `login.html?redirect=${encodeURIComponent(redirectUrl)}`;
   }
 }
 
-// Executar verificação ao carregar a página
 document.addEventListener('DOMContentLoaded', checkAuth);
