@@ -36,8 +36,12 @@ function carregarOcorrencias() {
     fetch(`${API_BASE_URL}/api/ocorrencias`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
       .then(data => {
+        console.log('Dados recebidos:', data); // Depuração
         ocorrencias = data;
         atualizarTabela();
         resolve();
@@ -148,7 +152,7 @@ async function gerarRelatorio() {
 
   console.log('Ocorrências filtradas:', ocorrenciasFiltradas); // Depuração
   if (ocorrenciasFiltradas.length === 0) {
-    showErrorToast('Nenhuma ocorrência encontrada para o setor selecionado.');
+    showErrorToast(`Nenhuma ocorrência encontrada para o setor ${relatorioSetor || 'selecionado'}.`);
     return;
   }
 
@@ -165,20 +169,6 @@ async function gerarRelatorio() {
             <th style="padding: 8px; border: 1px solid #dee2e6;">Setor</th>
             <th style="padding: 8px; border: 1px solid #dee2e6;">Cliente</th>
             <th style="padding: 8px; border: 1px solid #dee2e6;">Descrição</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Valor Desconto</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Tipo Desconto</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Colaborador</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Advertido</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Tipo Advertência</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Outra Advertência</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Comunicado</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Meio Comunicação</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Outro Meio</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Ações Imediatas</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Ações Corretivas</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Ações Preventivas</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Responsável</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Criado Por</th>
           </tr>
         </thead>
         <tbody>
@@ -189,20 +179,6 @@ async function gerarRelatorio() {
               <td style="padding: 8px; border: 1px solid #dee2e6;">${o.setor}</td>
               <td style="padding: 8px; border: 1px solid #dee2e6;">${o.cliente_impactado}</td>
               <td style="padding: 8px; border: 1px solid #dee2e6;">${o.descricao}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.valor_desconto || 'N/A'}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.tipo_desconto || 'N/A'}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.colaborador_nome} (${o.colaborador_cargo || 'N/A'})</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.advertido}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.tipo_advertencia || 'N/A'}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.advertencia_outra || 'N/A'}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.cliente_comunicado}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.meio_comunicacao || 'N/A'}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.comunicacao_outro || 'N/A'}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.acoes_imediatas || 'N/A'}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.acoes_corretivas || 'N/A'}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.acoes_preventivas || 'N/A'}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.responsavel_nome} (${formatarData(o.responsavel_data)})</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6${o.criado_por}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -210,25 +186,30 @@ async function gerarRelatorio() {
     </div>
   `;
 
-  // Aguardar renderização
-  setTimeout(() => {
-    const opt = {
-      margin: 0.5,
-      filename: `relatorio_ocorrencias${relatorioSetor ? '_' + relatorioSetor.toLowerCase() : ''}_${new Date().toISOString().slice(0,10)}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
-    };
+  console.log('Conteúdo do relatório:', relatorioContent.innerHTML); // Depuração
 
-    html2pdf().set(opt).from(relatorioContent).save()
-      .then(() => {
-        console.log('PDF gerado com sucesso');
-      })
-      .catch(error => {
-        console.error('Erro ao gerar PDF:', error);
-        showErrorToast('Erro ao gerar relatório.');
-      });
-  }, 100); // Pequeno atraso para garantir renderização
+  // Forçar renderização
+  await new Promise(resolve => {
+    requestAnimationFrame(() => {
+      setTimeout(resolve, 500);
+    });
+  });
+
+  const opt = {
+    margin: 0.5,
+    filename: `relatorio_ocorrencias${relatorioSetor ? '_' + relatorioSetor.toLowerCase() : ''}_${new Date().toISOString().slice(0,10)}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+  };
+
+  try {
+    await html2pdf().set(opt).from(relatorioContent).save();
+    console.log('PDF gerado com sucesso');
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    showErrorToast('Erro ao gerar relatório.');
+  }
 }
 
 function irParaPrimeiraPagina() {
