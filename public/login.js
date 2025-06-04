@@ -1,5 +1,3 @@
-const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://crm-pb-web.onrender.com';
-
 function showErrorToast(message) {
   const toast = document.getElementById('errorToast');
   const toastMessage = document.getElementById('errorToastMessage');
