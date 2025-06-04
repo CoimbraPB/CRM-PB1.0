@@ -9,7 +9,7 @@ function showErrorToast(message) {
     bsToast.show();
   } else {
     console.error('Toast elements not found:', { toast, toastMessage });
-    alert(message); // Fallback para erros críticos
+    alert(message);
   }
 }
 
@@ -18,47 +18,55 @@ function login(event) {
   console.log('Login function called');
 
   const emailInput = document.getElementById('email');
-  const passwordInput = document.getElementById('password');
+  const senhaInput = document.getElementById('senha');
 
-  if (!emailInput || !passwordInput) {
-    console.error('Form elements not found:', { emailInput, passwordInput });
+  if (!emailInput || !senhaInput) {
+    console.error('Form elements not found:', { emailInput, senhaInput });
     showErrorToast('Erro: Campos de email ou senha não encontrados.');
     return;
   }
 
   const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
+  const senha = senhaInput.value.trim();
 
-  if (!email || !password) {
+  if (!email || !senha) {
     showErrorToast('Por favor, preencha email e senha.');
     return;
   }
 
-  console.log('Attempting login with:', { email });
+  console.log('Attempting login with:', { email, senha: '****' });
 
   fetch(`${API_BASE_URL}/api/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({ email, senha })
   })
     .then(response => {
       console.log('Login response:', response.status);
-      if (!response.ok) throw new Error(`HTTP error - Status: ${response.status}`);
+      if (!response.ok) {
+        return response.json().then(err => {
+          throw new Error(err.error || `HTTP error - Status: ${response.status}`);
+        });
+      }
       return response.json();
     })
-    .then(data => {
-      console.log('Login successful:', data);
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('permissao', data.permissao);
+    .then(result => {
+      console.log('Login result:', result);
+      if (result.success) {
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('permissao', result.permissao);
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const redirectUrl = urlParams.get('redirect') || 'index.html';
-      console.log('Redirecting to:', redirectUrl);
-      window.location.href = redirectUrl;
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectUrl = urlParams.get('redirect') || 'index.html';
+        console.log('Redirecting to:', redirectUrl);
+        window.location.href = redirectUrl;
+      } else {
+        showErrorToast(result.error || 'Erro ao autenticar');
+      }
     })
     .catch(error => {
       console.error('Erro ao fazer login:', error);
-      showErrorToast('Credenciais inválidas ou erro no servidor.');
+      showErrorToast(error.message || 'Erro ao autenticar');
     });
 }
 
