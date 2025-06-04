@@ -17,15 +17,9 @@ function logout() {
 }
 
 function formatarData(data) {
-  if (!data) return '';
+  if (!data) return 'N/A';
   const date = new Date(data);
   return date.toLocaleDateString('pt-BR');
-}
-
-function escaparLatex(texto) {
-  if (!texto) return '';
-  return texto.replace(/([&%$#_{}~^\\])/g, '\\$1')
-              .replace(/\n/g, '\\\\\n');
 }
 
 function carregarOcorrencias() {
@@ -143,68 +137,77 @@ function gerarRelatorio() {
     return;
   }
 
-  const latexContent = `
-\\documentclass[a4paper,12pt]{article}
-\\usepackage[utf8]{inputenc}
-\\usepackage{geometry}
-\\usepackage{booktabs}
-\\usepackage{longtable}
-\\usepackage{pdflscape}
-\\geometry{margin=1in}
-
-\\title{Relatório de Ocorrências${relatorioSetor ? ' - Setor: ' + relatorioSetor : ''}}
-\\author{CRM Profissional}
-\\date{${new Date().toLocaleDateString('pt-BR')}}
-
-\\begin{document}
-
-\\maketitle
-
-\\begin{landscape}
-\\begin{longtable}{p{0.5in}p{0.8in}p{0.8in}p{1in}p{2in}p{0.8in}p{0.8in}p{1in}p{0.8in}p{1in}p{1in}p{0.8in}p{0.8in}p{1in}p{2in}p{2in}p{2in}p{1in}}
-\\caption{Relatório de Ocorrências} \\\\
-\\toprule
-ID & Data & Setor & Cliente & Descrição & Valor Desconto & Tipo Desconto & Colaborador & Advertido & Tipo Advertência & Outra Advertência & Comunicado & Meio & Outro Meio & Ações Imediatas & Ações Corretivas & Ações Preventivas & Responsável \\\\
-\\midrule
-\\endfirsthead
-\\toprule
-ID & Data & Setor & Cliente & Descrição & Valor Desconto & Tipo Desconto & Colaborador & Advertido & Tipo Advertência & Outra Advertência & Comunicado & Meio & Outro Meio & Ações Imediatas & Ações Corretivas & Ações Preventivas & Responsável \\\\
-\\midrule
-\\endhead
-${ocorrenciasFiltradas.map(o => `
-${o.id} &
-${formatarData(o.data_ocorrencia)} &
-${escaparLatex(o.setor)} &
-${escaparLatex(o.cliente_impactado)} &
-${escaparLatex(o.descricao)} &
-${escaparLatex(o.valor_desconto || 'N/A')} &
-${escaparLatex(o.tipo_desconto || 'N/A')} &
-${escaparLatex(o.colaborador_nome)} (${escaparLatex(o.colaborador_cargo || 'N/A')}) &
-${escaparLatex(o.advertido)} &
-${escaparLatex(o.tipo_advertencia || 'N/A')} &
-${escaparLatex(o.advertencia_outra || 'N/A')} &
-${escaparLatex(o.cliente_comunicado)} &
-${escaparLatex(o.meio_comunicacao || 'N/A')} &
-${escaparLatex(o.comunicacao_outro || 'N/A')} &
-${escaparLatex(o.acoes_imediatas || 'N/A')} &
-${escaparLatex(o.acoes_corretivas || 'N/A')} &
-${escaparLatex(o.acoes_preventivas || 'N/A')} &
-${escaparLatex(o.responsavel_nome)} (${formatarData(o.responsavel_data)}) \\\\
-`).join('')}
-\\bottomrule
-\\end{longtable}
-\\end{landscape}
-
-\\end{document}
+  const relatorioContent = document.getElementById('relatorioContent');
+  relatorioContent.innerHTML = `
+    <div class="p-4">
+      <h1 class="text-2xl font-bold mb-4">Relatório de Ocorrências${relatorioSetor ? ' - Setor: ' + relatorioSetor : ''}</h1>
+      <p class="mb-4">Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Data</th>
+            <th>Setor</th>
+            <th>Cliente</th>
+            <th>Descrição</th>
+            <th>Valor Desconto</th>
+            <th>Tipo Desconto</th>
+            <th>Colaborador</th>
+            <th>Advertido</th>
+            <th>Tipo Advertência</th>
+            <th>Outra Advertência</th>
+            <th>Comunicado</th>
+            <th>Meio Comunicação</th>
+            <th>Outro Meio</th>
+            <th>Ações Imediatas</th>
+            <th>Ações Corretivas</th>
+            <th>Ações Preventivas</th>
+            <th>Responsável</th>
+            <th>Criado Por</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${ocorrenciasFiltradas.map(o => `
+            <tr>
+              <td>${o.id}</td>
+              <td>${formatarData(o.data_ocorrencia)}</td>
+              <td>${o.setor}</td>
+              <td>${o.cliente_impactado}</td>
+              <td>${o.descricao}</td>
+              <td>${o.valor_desconto || 'N/A'}</td>
+              <td>${o.tipo_desconto || 'N/A'}</td>
+              <td>${o.colaborador_nome} (${o.colaborador_cargo || 'N/A'})</td>
+              <td>${o.advertido}</td>
+              <td>${o.tipo_advertencia || 'N/A'}</td>
+              <td>${o.advertencia_outra || 'N/A'}</td>
+              <td>${o.cliente_comunicado}</td>
+              <td>${o.meio_comunicacao || 'N/A'}</td>
+              <td>${o.comunicacao_outro || 'N/A'}</td>
+              <td>${o.acoes_imediatas || 'N/A'}</td>
+              <td>${o.acoes_corretivas || 'N/A'}</td>
+              <td>${o.acoes_preventivas || 'N/A'}</td>
+              <td>${o.responsavel_nome} (${formatarData(o.responsavel_data)})</td>
+              <td>${o.criado_por}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
   `;
 
-  const blob = new Blob([latexContent], { type: 'text/latex' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `relatorio_ocorrencias${relatorioSetor ? '_' + relatorioSetor.toLowerCase() : ''}_${new Date().toISOString().slice(0,10)}.tex`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const opt = {
+    margin: 1,
+    filename: `relatorio_ocorrencias${relatorioSetor ? '_' + relatorioSetor.toLowerCase() : ''}_${new Date().toISOString().slice(0,10)}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+  };
+
+  html2pdf().set(opt).from(relatorioContent).save()
+    .catch(error => {
+      console.error('Erro ao gerar PDF:', error);
+      showErrorToast('Erro ao gerar relatório.');
+    });
 }
 
 function irParaPrimeiraPagina() {
