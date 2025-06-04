@@ -155,67 +155,46 @@ async function gerarRelatorio() {
     return;
   }
 
-  // Criar elemento temporário visível
-  const tempContainer = document.createElement('div');
-  tempContainer.style.position = 'absolute';
-  tempContainer.style.left = '-9999px'; // Fora da tela, mas visível para html2canvas
-  document.body.appendChild(tempContainer);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
-  tempContainer.innerHTML = `
-    <div style="padding: 20px; font-family: Arial, sans-serif;">
-      <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 16px;">Relatório de Ocorrências${relatorioSetor ? ' - Setor: ' + relatorioSetor : ''}</h1>
-      <p style="margin-bottom: 16px;">Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>
-      <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-        <thead>
-          <tr style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
-            <th style="padding: 8px; border: 1px solid #dee2e6;">ID</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Data</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Setor</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Cliente</th>
-            <th style="padding: 8px; border: 1px solid #dee2e6;">Descrição</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${ocorrenciasFiltradas.map(o => `
-            <tr style="border: 1px solid #dee2e6;">
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.id}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${formatarData(o.data_ocorrencia)}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.setor}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.cliente_impactado}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.descricao}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
+  // Título
+  doc.setFontSize(16);
+  doc.text(`Relatório de Ocorrências${relatorioSetor ? ' - Setor: ' + relatorioSetor : ''}`, 14, 20);
+  doc.setFontSize(12);
+  doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 30);
 
-  console.log('Conteúdo do relatório (tempContainer):', tempContainer.innerHTML);
+  // Tabela
+  const headers = [['ID', 'Data', 'Setor', 'Cliente', 'Descrição']];
+  const data = ocorrenciasFiltradas.map(o => [
+    o.id,
+    formatarData(o.data_ocorrencia),
+    o.setor,
+    o.cliente_impactado,
+    o.descricao
+  ]);
 
-  // Forçar reflow do DOM
-  await new Promise(resolve => {
-    requestAnimationFrame(() => {
-      document.body.offsetHeight; // Forçar reflow
-      setTimeout(resolve, 1000); // Aumentar atraso
-    });
+  doc.autoTable({
+    head: headers,
+    body: data,
+    startY: 40,
+    styles: { fontSize: 10, cellPadding: 2 },
+    headStyles: { fillColor: [200, 200, 200] },
+    columnStyles: {
+      0: { cellWidth: 20 }, // ID
+      1: { cellWidth: 30 }, // Data
+      2: { cellWidth: 40 }, // Setor
+      3: { cellWidth: 50 }, // Cliente
+      4: { cellWidth: 100 } // Descrição
+    }
   });
 
-  const opt = {
-    margin: 0.5,
-    filename: `relatorio_ocorrencias${relatorioSetor ? '_' + relatorioSetor.toLowerCase() : ''}_${new Date().toISOString().slice(0,10)}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: `in`, format: `a4`, orientation: `landscape` }
-  };
-
   try {
-    await html2pdf().set(opt).from(tempContainer).save();
+    doc.save(`relatorio_ocorrencias${relatorioSetor ? '_' + relatorioSetor.toLowerCase() : ''}_${new Date().toISOString().slice(0,10)}.pdf`);
     console.log('PDF gerado com sucesso');
   } catch (error) {
     console.error('Erro ao gerar PDF:', error);
     showErrorToast('Erro ao gerar relatório.');
-  } finally {
-    document.body.removeChild(tempContainer); // Limpar elemento temporário
   }
 }
 
@@ -251,7 +230,7 @@ function irParaProximaPagina() {
 function irParaUltimaPagina() {
   const filtroInput = document.getElementById('filtroInput').value.toLowerCase();
   const filtroSetor = document.getElementById('filtroSetor').value;
-  const ocorrenciasFiltradas = ocorrencias.filter(ocorrencia => {
+  const ocorrenciasFiltradas = fiche.filter(ocorrencia => {
     const matchesFiltro = ocorrencia.cliente_impactado.toLowerCase().includes(filtroInput) ||
       ocorrencia.setor.toLowerCase().includes(filtroInput) ||
       ocorrencia.colaborador_nome.toLowerCase().includes(filtroInput);
