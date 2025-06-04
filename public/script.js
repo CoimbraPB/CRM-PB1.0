@@ -1,4 +1,7 @@
 const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://crm-pb-web.onrender.com';
+let clientes = [];
+let paginaAtual = 1;
+const clientesPorPagina = 10;
 
 async function renderizarClientes() {
   const clientesBody = document.getElementById('clientesBody');
@@ -14,7 +17,8 @@ async function renderizarClientes() {
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
-    const clientes = await response.json();
+    clientes = await response.json();
+    console.log('Clientes recebidos:', clientes);
     clientesBody.innerHTML = '';
     const filtroInput = document.getElementById('filtroInput');
     const filtro = filtroInput ? filtroInput.value.toLowerCase() : '';
@@ -73,69 +77,94 @@ async function renderizarClientes() {
   }
 }
 
-function importarClientes() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.onchange = function(e) {
-    const files = e.target.files;
-    if (files.length === 0) return;
-    
-    const file = files[0];
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
-      try {
-        const importedData = JSON.parse(e.target.result);
-        if (!Array.isArray(importedData)) {
-          throw new Error('O arquivo não contém um array de clientes válido.');
-        }
-        
-        const primeiroCliente = importedData[0];
-        if (!primeiroCliente || !primeiroCliente.codigo || !primeiroCliente.nome || !primeiroCliente.cpf_cnpj) {
-          throw new Error('O arquivo não possui o formato esperado de clientes.');
-        }
-        
-        if (confirm(`Deseja importar ${importedData.length} clientes? Isso substituirá ou atualizará clientes existentes com base no código.`)) {
-          fetch(`${API_BASE_URL}/api/clientes/import`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(importedData)
-          })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`HTTP error ${response.status}`);
-            }
-            return response.json();
-          })
-          .then(result => {
-            if (result.success) {
-              showSuccessToast(result.message || 'Clientes importados com sucesso!');
-              renderizarClientes();
-            } else {
-              showErrorToast(result.error || 'Erro ao importar clientes.');
-            }
-          })
-          .catch(error => {
-            showErrorToast('Erro ao importar clientes: ' + error.message);
-          });
-        }
-      } catch (error) {
-        showErrorToast('Erro ao importar arquivo: ' + error.message);
+function importarClientes(files) {
+  if (files.length === 0) return;
+  
+  const file = files[0];
+  const reader = new FileReader();
+  
+  reader.onload = function(e) {
+    try {
+      const importedData = JSON.parse(e.target.result);
+      if (!Array.isArray(importedData)) {
+        throw new Error('O arquivo não contém um array de clientes válido.');
       }
-    };
-    
-    reader.onerror = function() {
-      showErrorToast('Erro ao ler o arquivo');
-    };
-    
-    reader.readAsText(file);
+      
+      const primeiroCliente = importedData[0];
+      if (!primeiroCliente || !primeiroCliente.codigo || !primeiroCliente.nome || !primeiroCliente.cpf_cnpj) {
+        throw new Error('O arquivo não possui o formato esperado de clientes.');
+      }
+      
+      if (confirm(`Deseja importar ${importedData.length} clientes? Isso substituirá ou atualizará clientes existentes com base no código.`)) {
+        fetch(`${API_BASE_URL}/api/clientes/import`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(importedData)
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(result => {
+          if (result.success) {
+            showSuccessToast(result.message || 'Clientes importados com sucesso!');
+            renderizarClientes();
+          } else {
+            showErrorToast(result.error || 'Erro ao importar clientes.');
+          }
+        })
+        .catch(error => {
+          showErrorToast('Erro ao importar clientes: ' + error.message);
+        });
+      }
+    } catch (error) {
+      showErrorToast('Erro ao importar arquivo: ' + error.message);
+    }
   };
-  input.click();
+  
+  reader.onerror = function() {
+    showErrorToast('Erro ao ler o arquivo');
+  };
+  
+  reader.readAsText(file);
+}
+
+function abrirModal() {
+  const modal = new bootstrap.Modal(document.getElementById('clienteModal'));
+  document.getElementById('clienteModalLabel').textContent = 'Adicionar Cliente';
+  document.getElementById('clienteForm').reset();
+  document.getElementById('clienteIndex').value = '';
+  modal.show();
 }
 
 function editarCliente(id) {
-  showErrorToast('Funcionalidade de edição não implementada.');
+  const cliente = clientes.find(c => c.id === id);
+  if (!cliente) {
+    showErrorToast('Cliente não encontrado.');
+    return;
+  }
+
+  const modal = new bootstrap.Modal(document.getElementById('clienteModal'));
+  document.getElementById('clienteModalLabel').textContent = 'Editar Cliente';
+  document.getElementById('codigo').value = cliente.codigo || '';
+  document.getElementById('nome').value = cliente.nome || '';
+  document.getElementById('razao_social').value = cliente.razao_social || '';
+  document.getElementById('cpf_cnpj').value = cliente.cpf_cnpj || '';
+  document.getElementById('regime_fiscal').value = cliente.regime_fiscal || 'Simples Nacional';
+  document.getElementById('situacao').value = cliente.situacao || 'Ativo';
+  document.getElementById('tipo_pessoa').value = cliente.tipo_pessoa || 'Física';
+  document.getElementById('estado').value = cliente.estado || 'SP';
+  document.getElementById('municipio').value = cliente.municipio || '';
+  document.getElementById('status').value = cliente.status || 'Ativo';
+  document.getElementById('possui_ie').value = cliente.possui_ie || 'Não';
+  document.getElementById('ie').value = cliente.ie || '';
+  document.getElementById('filial').value = cliente.filial || '';
+  document.getElementById('empresa_matriz').value = cliente.empresa_matriz || '';
+  document.getElementById('grupo').value = cliente.grupo || '';
+  document.getElementById('clienteIndex').value = id;
+  modal.show();
 }
 
 function excluirCliente(id) {
@@ -158,50 +187,144 @@ function excluirCliente(id) {
   }
 }
 
+function exportarPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.text('Lista de Clientes', 20, 10);
+  doc.autoTable({
+    head: [['Código', 'Nome', 'Razão Social', 'CPF/CNPJ', 'Estado', 'Status']],
+    body: clientes.map(cliente => [
+      cliente.codigo || '',
+      cliente.nome || '',
+      cliente.razao_social || '',
+      cliente.cpf_cnpj || '',
+      cliente.estado || '',
+      cliente.status || ''
+    ])
+  });
+  doc.save('clientes.pdf');
+}
+
+function exportarJSON() {
+  const dataStr = JSON.stringify(clientes, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'clientes.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function filtrarClientes() {
+  paginaAtual = 1;
+  renderizarClientes();
+}
+
+function irParaPrimeiraPagina() {
+  paginaAtual = 1;
+  renderizarClientes();
+}
+
+function irParaPaginaAnterior() {
+  if (paginaAtual > 1) {
+    paginaAtual--;
+    renderizarClientes();
+  }
+}
+
+function irParaProximaPagina() {
+  const totalPaginas = Math.ceil(clientes.length / clientesPorPagina);
+  if (paginaAtual < totalPaginas) {
+    paginaAtual++;
+    renderizarClientes();
+  }
+}
+
+function irParaUltimaPagina() {
+  const totalPaginas = Math.ceil(clientes.length / clientesPorPagina);
+  paginaAtual = totalPaginas || 1;
+  renderizarClientes();
+}
+
 function showSuccessToast(message) {
-  alert(message); // Substituir por toast personalizado
+  const toast = document.getElementById('successToast');
+  document.getElementById('successToastMessage').textContent = message;
+  const bsToast = new bootstrap.Toast(toast);
+  bsToast.show();
 }
 
 function showErrorToast(message) {
-  alert(message); // Substituir por toast personalizado
+  const toast = document.getElementById('errorToast');
+  document.getElementById('errorToastMessage').textContent = message;
+  const bsToast = new bootstrap.Toast(toast);
+  bsToast.show();
 }
 
 function inicializarEventos() {
   const filtroInput = document.getElementById('filtroInput');
-  const importarBtn = document.getElementById('importarBtn');
-  const prevPage = document.getElementById('prevPage');
-  const nextPage = document.getElementById('nextPage');
+  const fileInput = document.getElementById('fileInput');
+  const clienteForm = document.getElementById('clienteForm');
 
-  if (!filtroInput || !importarBtn || !prevPage || !nextPage) {
-    console.error('Elementos de interação não encontrados:', { filtroInput, importarBtn, prevPage, nextPage });
-    showErrorToast('Erro: Interface não carregada corretamente. Verifique os IDs no HTML.');
+  const missingElements = [];
+  if (!filtroInput) missingElements.push('filtroInput');
+  if (!fileInput) missingElements.push('fileInput');
+  if (!clienteForm) missingElements.push('clienteForm');
+
+  if (missingElements.length > 0) {
+    console.error('Elementos DOM faltando:', missingElements);
+    showErrorToast(`Erro: Elementos não encontrados no HTML: ${missingElements.join(', ')}`);
     return;
   }
 
-  filtroInput.addEventListener('input', () => {
-    paginaAtual = 1;
-    renderizarClientes();
-  });
+  filtroInput.addEventListener('input', filtrarClientes);
+  fileInput.addEventListener('change', (e) => importarClientes(e.target.files));
 
-  importarBtn.addEventListener('click', importarClientes);
+  clienteForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cliente = {
+      codigo: document.getElementById('codigo').value,
+      nome: document.getElementById('nome').value,
+      razao_social: document.getElementById('razao_social').value,
+      cpf_cnpj: document.getElementById('cpf_cnpj').value,
+      regime_fiscal: document.getElementById('regime_fiscal').value,
+      situacao: document.getElementById('situacao').value,
+      tipo_pessoa: document.getElementById('tipo_pessoa').value,
+      estado: document.getElementById('estado').value,
+      municipio: document.getElementById('municipio').value,
+      status: document.getElementById('status').value,
+      possui_ie: document.getElementById('possui_ie').value,
+      ie: document.getElementById('ie').value,
+      filial: document.getElementById('filial').value,
+      empresa_matriz: document.getElementById('empresa_matriz').value,
+      grupo: document.getElementById('grupo').value
+    };
+    const id = document.getElementById('clienteIndex').value;
 
-  prevPage.addEventListener('click', () => {
-    if (paginaAtual > 1) {
-      paginaAtual--;
-      renderizarClientes();
+    try {
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `${API_BASE_URL}/api/clientes/${id}` : `${API_BASE_URL}/api/clientes`;
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cliente)
+      });
+      const result = await response.json();
+      if (result.success) {
+        showSuccessToast(id ? 'Cliente atualizado com sucesso!' : 'Cliente adicionado com sucesso!');
+        renderizarClientes();
+        bootstrap.Modal.getInstance(document.getElementById('clienteModal')).hide();
+      } else {
+        showErrorToast(result.error || 'Erro ao salvar cliente.');
+      }
+    } catch (error) {
+      showErrorToast('Erro ao salvar cliente: ' + error.message);
     }
-  });
-
-  nextPage.addEventListener('click', () => {
-    paginaAtual++;
-    renderizarClientes();
   });
 }
 
-let paginaAtual = 1;
-const clientesPorPagina = 10;
-
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM carregado, iniciando eventos...');
   inicializarEventos();
   renderizarClientes();
 });
