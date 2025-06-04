@@ -23,26 +23,31 @@ function formatarData(data) {
 }
 
 function carregarOcorrencias() {
-  const token = localStorage.getItem('token');
-  const permissao = localStorage.getItem('permissao');
-  if (!token || permissao !== 'Gerente') {
-    showErrorToast('Acesso negado. Faça login como Gerente.');
-    setTimeout(() => window.location.href = 'login.html', 1000);
-    return;
-  }
+  return new Promise((resolve, reject) => {
+    const token = localStorage.getItem('token');
+    const permissao = localStorage.getItem('permissao');
+    if (!token || permissao !== 'Gerente') {
+      showErrorToast('Acesso negado. Faça login como Gerente.');
+      setTimeout(() => window.location.href = 'login.html', 1000);
+      reject(new Error('Acesso negado'));
+      return;
+    }
 
-  fetch(`${API_BASE_URL}/api/ocorrencias`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  })
-    .then(response => response.json())
-    .then(data => {
-      ocorrencias = data;
-      atualizarTabela();
+    fetch(`${API_BASE_URL}/api/ocorrencias`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     })
-    .catch(error => {
-      console.error('Erro ao carregar ocorrências:', error);
-      showErrorToast('Erro ao carregar ocorrências.');
-    });
+      .then(response => response.json())
+      .then(data => {
+        ocorrencias = data;
+        atualizarTabela();
+        resolve();
+      })
+      .catch(error => {
+        console.error('Erro ao carregar ocorrências:', error);
+        showErrorToast('Erro ao carregar ocorrências.');
+        reject(error);
+      });
+  });
 }
 
 function atualizarTabela() {
@@ -118,7 +123,7 @@ function mostrarDetalhes(id) {
   modal.show();
 }
 
-function gerarRelatorio() {
+async function gerarRelatorio() {
   const token = localStorage.getItem('token');
   const permissao = localStorage.getItem('permissao');
   if (!token || permissao !== 'Gerente') {
@@ -127,11 +132,21 @@ function gerarRelatorio() {
     return;
   }
 
+  // Garantir que ocorrencias está carregada
+  try {
+    await carregarOcorrencias();
+  } catch (error) {
+    showErrorToast('Erro ao carregar dados para o relatório.');
+    return;
+  }
+
   const relatorioSetor = document.getElementById('relatorioSetor').value;
+  console.log('Setor selecionado:', relatorioSetor); // Depuração
   const ocorrenciasFiltradas = relatorioSetor
     ? ocorrencias.filter(o => o.setor === relatorioSetor)
     : ocorrencias;
 
+  console.log('Ocorrências filtradas:', ocorrenciasFiltradas); // Depuração
   if (ocorrenciasFiltradas.length === 0) {
     showErrorToast('Nenhuma ocorrência encontrada para o setor selecionado.');
     return;
@@ -139,55 +154,55 @@ function gerarRelatorio() {
 
   const relatorioContent = document.getElementById('relatorioContent');
   relatorioContent.innerHTML = `
-    <div class="p-4">
-      <h1 class="text-2xl font-bold mb-4">Relatório de Ocorrências${relatorioSetor ? ' - Setor: ' + relatorioSetor : ''}</h1>
-      <p class="mb-4">Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>
-      <table class="table table-bordered">
+    <div style="padding: 20px; font-family: Arial, sans-serif;">
+      <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 16px;">Relatório de Ocorrências${relatorioSetor ? ' - Setor: ' + relatorioSetor : ''}</h1>
+      <p style="margin-bottom: 16px;">Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
         <thead>
-          <tr>
-            <th>ID</th>
-            <th>Data</th>
-            <th>Setor</th>
-            <th>Cliente</th>
-            <th>Descrição</th>
-            <th>Valor Desconto</th>
-            <th>Tipo Desconto</th>
-            <th>Colaborador</th>
-            <th>Advertido</th>
-            <th>Tipo Advertência</th>
-            <th>Outra Advertência</th>
-            <th>Comunicado</th>
-            <th>Meio Comunicação</th>
-            <th>Outro Meio</th>
-            <th>Ações Imediatas</th>
-            <th>Ações Corretivas</th>
-            <th>Ações Preventivas</th>
-            <th>Responsável</th>
-            <th>Criado Por</th>
+          <tr style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
+            <th style="padding: 8px; border: 1px solid #dee2e6;">ID</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Data</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Setor</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Cliente</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Descrição</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Valor Desconto</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Tipo Desconto</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Colaborador</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Advertido</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Tipo Advertência</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Outra Advertência</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Comunicado</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Meio Comunicação</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Outro Meio</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Ações Imediatas</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Ações Corretivas</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Ações Preventivas</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Responsável</th>
+            <th style="padding: 8px; border: 1px solid #dee2e6;">Criado Por</th>
           </tr>
         </thead>
         <tbody>
           ${ocorrenciasFiltradas.map(o => `
-            <tr>
-              <td>${o.id}</td>
-              <td>${formatarData(o.data_ocorrencia)}</td>
-              <td>${o.setor}</td>
-              <td>${o.cliente_impactado}</td>
-              <td>${o.descricao}</td>
-              <td>${o.valor_desconto || 'N/A'}</td>
-              <td>${o.tipo_desconto || 'N/A'}</td>
-              <td>${o.colaborador_nome} (${o.colaborador_cargo || 'N/A'})</td>
-              <td>${o.advertido}</td>
-              <td>${o.tipo_advertencia || 'N/A'}</td>
-              <td>${o.advertencia_outra || 'N/A'}</td>
-              <td>${o.cliente_comunicado}</td>
-              <td>${o.meio_comunicacao || 'N/A'}</td>
-              <td>${o.comunicacao_outro || 'N/A'}</td>
-              <td>${o.acoes_imediatas || 'N/A'}</td>
-              <td>${o.acoes_corretivas || 'N/A'}</td>
-              <td>${o.acoes_preventivas || 'N/A'}</td>
-              <td>${o.responsavel_nome} (${formatarData(o.responsavel_data)})</td>
-              <td>${o.criado_por}</td>
+            <tr style="border: 1px solid #dee2e6;">
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.id}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${formatarData(o.data_ocorrencia)}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.setor}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.cliente_impactado}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.descricao}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.valor_desconto || 'N/A'}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.tipo_desconto || 'N/A'}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.colaborador_nome} (${o.colaborador_cargo || 'N/A'})</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.advertido}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.tipo_advertencia || 'N/A'}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.advertencia_outra || 'N/A'}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.cliente_comunicado}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.meio_comunicacao || 'N/A'}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.comunicacao_outro || 'N/A'}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.acoes_imediatas || 'N/A'}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.acoes_corretivas || 'N/A'}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.acoes_preventivas || 'N/A'}</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6;">${o.responsavel_nome} (${formatarData(o.responsavel_data)})</td>
+              <td style="padding: 8px; border: 1px solid #dee2e6${o.criado_por}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -195,19 +210,25 @@ function gerarRelatorio() {
     </div>
   `;
 
-  const opt = {
-    margin: 1,
-    filename: `relatorio_ocorrencias${relatorioSetor ? '_' + relatorioSetor.toLowerCase() : ''}_${new Date().toISOString().slice(0,10)}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
-  };
+  // Aguardar renderização
+  setTimeout(() => {
+    const opt = {
+      margin: 0.5,
+      filename: `relatorio_ocorrencias${relatorioSetor ? '_' + relatorioSetor.toLowerCase() : ''}_${new Date().toISOString().slice(0,10)}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+    };
 
-  html2pdf().set(opt).from(relatorioContent).save()
-    .catch(error => {
-      console.error('Erro ao gerar PDF:', error);
-      showErrorToast('Erro ao gerar relatório.');
-    });
+    html2pdf().set(opt).from(relatorioContent).save()
+      .then(() => {
+        console.log('PDF gerado com sucesso');
+      })
+      .catch(error => {
+        console.error('Erro ao gerar PDF:', error);
+        showErrorToast('Erro ao gerar relatório.');
+      });
+  }, 100); // Pequeno atraso para garantir renderização
 }
 
 function irParaPrimeiraPagina() {
