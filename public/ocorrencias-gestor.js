@@ -23,7 +23,9 @@ function logout() {
 document.addEventListener('DOMContentLoaded', () => {
   const token = localStorage.getItem('token');
   const permissao = localStorage.getItem('permissao');
-  if (!token || permissao !== 'Gestor') {
+  const permissoesPermitidas = ['Gerente', 'Gestor'];
+
+  if (!token || !permissoesPermitidas.includes(permissao)) {
     showErrorToast('Acesso negado. Faça login como Gestor.');
     setTimeout(() => window.location.href = 'login.html', 1000);
     return;
