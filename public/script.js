@@ -1,6 +1,8 @@
+const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://crm-pb-web.onrender.com';
+
 async function renderizarClientes() {
   try {
-    const response = await fetch('/api/clientes');
+    const response = await fetch(`${API_BASE_URL}/api/clientes`);
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
@@ -85,7 +87,7 @@ function importarClientes() {
         }
         
         if (confirm(`Deseja importar ${importedData.length} clientes? Isso substituirá ou atualizará clientes existentes com base no código.`)) {
-          fetch('/api/clientes/import', {
+          fetch(`${API_BASE_URL}/api/clientes/import`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(importedData)
@@ -128,7 +130,7 @@ function editarCliente(id) {
 
 function excluirCliente(id) {
   if (confirm('Deseja excluir este cliente?')) {
-    fetch(`/api/clientes/${id}`, {
+    fetch(`${API_BASE_URL}/api/clientes/${id}`, {
       method: 'DELETE'
     })
     .then(response => response.json())
@@ -147,12 +149,10 @@ function excluirCliente(id) {
 }
 
 function showSuccessToast(message) {
-  // Implementar toast de sucesso
   alert(message); // Placeholder
 }
 
 function showErrorToast(message) {
-  // Implementar toast de erro
   alert(message); // Placeholder
 }
 
