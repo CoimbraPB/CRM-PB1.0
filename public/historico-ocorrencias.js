@@ -22,6 +22,12 @@ function formatarData(data) {
   return date.toLocaleDateString('pt-BR');
 }
 
+function escaparLatex(texto) {
+  if (!texto) return '';
+  return texto.replace(/([&%$#_{}~^\\])/g, '\\$1')
+              .replace(/\n/g, '\\\\\n');
+}
+
 function carregarOcorrencias() {
   const token = localStorage.getItem('token');
   const permissao = localStorage.getItem('permissao');
@@ -116,6 +122,89 @@ function mostrarDetalhes(id) {
 
   const modal = new bootstrap.Modal(document.getElementById('detalhesOcorrenciaModal'));
   modal.show();
+}
+
+function gerarRelatorio() {
+  const token = localStorage.getItem('token');
+  const permissao = localStorage.getItem('permissao');
+  if (!token || permissao !== 'Gerente') {
+    showErrorToast('Acesso negado. Faça login como Gerente.');
+    setTimeout(() => window.location.href = 'login.html', 1000);
+    return;
+  }
+
+  const relatorioSetor = document.getElementById('relatorioSetor').value;
+  const ocorrenciasFiltradas = relatorioSetor
+    ? ocorrencias.filter(o => o.setor === relatorioSetor)
+    : ocorrencias;
+
+  if (ocorrenciasFiltradas.length === 0) {
+    showErrorToast('Nenhuma ocorrência encontrada para o setor selecionado.');
+    return;
+  }
+
+  const latexContent = `
+\\documentclass[a4paper,12pt]{article}
+\\usepackage[utf8]{inputenc}
+\\usepackage{geometry}
+\\usepackage{booktabs}
+\\usepackage{longtable}
+\\usepackage{pdflscape}
+\\geometry{margin=1in}
+
+\\title{Relatório de Ocorrências${relatorioSetor ? ' - Setor: ' + relatorioSetor : ''}}
+\\author{CRM Profissional}
+\\date{${new Date().toLocaleDateString('pt-BR')}}
+
+\\begin{document}
+
+\\maketitle
+
+\\begin{landscape}
+\\begin{longtable}{p{0.5in}p{0.8in}p{0.8in}p{1in}p{2in}p{0.8in}p{0.8in}p{1in}p{0.8in}p{1in}p{1in}p{0.8in}p{0.8in}p{1in}p{2in}p{2in}p{2in}p{1in}}
+\\caption{Relatório de Ocorrências} \\\\
+\\toprule
+ID & Data & Setor & Cliente & Descrição & Valor Desconto & Tipo Desconto & Colaborador & Advertido & Tipo Advertência & Outra Advertência & Comunicado & Meio & Outro Meio & Ações Imediatas & Ações Corretivas & Ações Preventivas & Responsável \\\\
+\\midrule
+\\endfirsthead
+\\toprule
+ID & Data & Setor & Cliente & Descrição & Valor Desconto & Tipo Desconto & Colaborador & Advertido & Tipo Advertência & Outra Advertência & Comunicado & Meio & Outro Meio & Ações Imediatas & Ações Corretivas & Ações Preventivas & Responsável \\\\
+\\midrule
+\\endhead
+${ocorrenciasFiltradas.map(o => `
+${o.id} &
+${formatarData(o.data_ocorrencia)} &
+${escaparLatex(o.setor)} &
+${escaparLatex(o.cliente_impactado)} &
+${escaparLatex(o.descricao)} &
+${escaparLatex(o.valor_desconto || 'N/A')} &
+${escaparLatex(o.tipo_desconto || 'N/A')} &
+${escaparLatex(o.colaborador_nome)} (${escaparLatex(o.colaborador_cargo || 'N/A')}) &
+${escaparLatex(o.advertido)} &
+${escaparLatex(o.tipo_advertencia || 'N/A')} &
+${escaparLatex(o.advertencia_outra || 'N/A')} &
+${escaparLatex(o.cliente_comunicado)} &
+${escaparLatex(o.meio_comunicacao || 'N/A')} &
+${escaparLatex(o.comunicacao_outro || 'N/A')} &
+${escaparLatex(o.acoes_imediatas || 'N/A')} &
+${escaparLatex(o.acoes_corretivas || 'N/A')} &
+${escaparLatex(o.acoes_preventivas || 'N/A')} &
+${escaparLatex(o.responsavel_nome)} (${formatarData(o.responsavel_data)}) \\\\
+`).join('')}
+\\bottomrule
+\\end{longtable}
+\\end{landscape}
+
+\\end{document}
+  `;
+
+  const blob = new Blob([latexContent], { type: 'text/latex' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `relatorio_ocorrencias${relatorioSetor ? '_' + relatorioSetor.toLowerCase() : ''}_${new Date().toISOString().slice(0,10)}.tex`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function irParaPrimeiraPagina() {

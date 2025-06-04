@@ -33,6 +33,17 @@
         <option value="Societário">Societário</option>
         <option value="Regularização">Regularização</option>
       </select>
+      <select id="relatorioSetor" class="form-select w-full max-w-xs">
+        <option value="">Todos os Setores (Relatório)</option>
+        <option value="Contábil">Contábil</option>
+        <option value="Fiscal">Fiscal</option>
+        <option value="DP">DP</option>
+        <option value="Societário">Societário</option>
+        <option value="Regularização">Regularização</option>
+      </select>
+      <button class="btn btn-success" onclick="gerarRelatorio()">
+        <i class="bi bi-file-earmark-pdf"></i> Gerar Relatório
+      </button>
     </div>
     <div class="table-container">
       <table class="table table-bordered table-hover min-w-full bg-white">
@@ -61,7 +72,6 @@
       </div>
     </div>
   </div>
-  <!-- Modal para Detalhes da Ocorrência -->
   <div class="modal fade" id="detalhesOcorrenciaModal" tabindex="-1" aria-labelledby="detalhesOcorrenciaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
