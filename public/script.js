@@ -380,6 +380,9 @@ function inicializarEventos() {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM carregado, iniciando eventos...');
   renderNavbar();
-  inicializarEventos();
-  renderizarClientes();
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  if (currentPage === 'index.html') {
+    inicializarEventos();
+    renderizarClientes();
+  }
 });
