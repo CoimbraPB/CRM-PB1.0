@@ -1,112 +1,138 @@
-const { Client } = require('pg');
 const express = require('express');
-const path = require('path');
+const { Client } = require('pg');
 const cors = require('cors');
-const app = express();
-const port = process.env.PORT || 3000;
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const path = require('path');
 
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+const app = express();
+const JWT_SECRET = process.env.JWT_SECRET || 'seu_segredo_aqui'; // Defina no Render
+
+app.use(cors({ origin: 'https://crm-pb-web.onrender.com' }));
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Função para criar a tabela de clientes
-async function criarTabelaClientes(client) {
-  const query = `
-    CREATE TABLE IF NOT EXISTS clientes (
-      id SERIAL PRIMARY KEY,
-      codigo VARCHAR(50) NOT NULL UNIQUE,
-      nome VARCHAR(100) NOT NULL,
-      razao_social VARCHAR(100),
-      cpf_cnpj VARCHAR(20) NOT NULL,
-      regime_fiscal VARCHAR(50),
-      situacao VARCHAR(20),
-      tipo_pessoa VARCHAR(20),
-      estado VARCHAR(50),
-      municipio VARCHAR(100),
-      status VARCHAR(20),
-      possui_ie VARCHAR(20),
-      ie VARCHAR(50),
-      filial VARCHAR(50),
-      empresa_matriz VARCHAR(50),
-      grupo VARCHAR(50),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-  `;
-  await client.query(query);
+function autenticar(permissao) {
+  return async (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Token não fornecido' });
+
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      const client = new Client({
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+      });
+      await client.connect();
+      const result = await client.query('SELECT permissao FROM usuarios WHERE id = $1', [decoded.userId]);
+      await client.end();
+
+      if (result.rows.length === 0) {
+        return res.status(401).json({ error: 'Usuário não encontrado' });
+      }
+      if (permissao && result.rows[0].permissao !== permissao) {
+        return res.status(403).json({ error: 'Permissão insuficiente' });
+      }
+
+      req.user = decoded;
+      next();
+    } catch (error) {
+      res.status(401).json({ error: 'Token inválido' });
+    }
+  };
 }
 
-// Rota para importar clientes
-app.post('/api/clientes/import', async (req, res) => {
-  const clientes = req.body;
-  if (!Array.isArray(clientes) || clientes.length === 0) {
-    return res.status(400).json({ success: false, error: 'O arquivo deve conter um array de clientes não vazio' });
-  }
-
+app.post('/api/login', async (req, res) => {
+  const { email, senha } = req.body;
   const client = new Client({
-    connectionString: process.env.DATABASE_URL || 'postgresql://clientes_v6h2_user:Ae7UBJJzSN9bivs5Q0fvc7SYYrLP3liz@dpg-d0v0fjndiees73cc6d0g-a.oregon-postgres.render.com/clientes_v6h2',
+    connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
 
   try {
     await client.connect();
-    await criarTabelaClientes(client);
-    for (const cliente of clientes) {
-      const query = `
-        INSERT INTO clientes (
-          codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, 
-          tipo_pessoa, estado, municipio, status, possui_ie, ie, filial, 
-          empresa_matriz, grupo
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-        ON CONFLICT (codigo) DO UPDATE 
-        SET nome = EXCLUDED.nome,
-            razao_social = EXCLUDED.razao_social,
-            cpf_cnpj = EXCLUDED.cpf_cnpj,
-            regime_fiscal = EXCLUDED.regime_fiscal,
-            situacao = EXCLUDED.situacao,
-            tipo_pessoa = EXCLUDED.tipo_pessoa,
-            estado = EXCLUDED.estado,
-            municipio = EXCLUDED.municipio,
-            status = EXCLUDED.status,
-            possui_ie = EXCLUDED.possui_ie,
-            ie = EXCLUDED.ie,
-            filial = EXCLUDED.filial,
-            empresa_matriz = EXCLUDED.empresa_matriz,
-            grupo = EXCLUDED.grupo,
-            updated_at = CURRENT_TIMESTAMP
-        RETURNING *;
-      `;
-      const values = [
-        cliente.codigo,
-        cliente.nome,
-        cliente.cpf_cnpj,
-        cliente.razao_social || null,
-        cliente.regime_fiscal || 'Simples Nacional',
-        cliente.situacao || 'Ativo',
-        cliente.tipo_pessoa || 'Física',
-        cliente.estado || null,
-        cliente.municipio || null,
-        cliente.status || 'Ativo',
-        cliente.possui_ie || 'Não',
-        cliente.ie || null,
-        cliente.filial || null,
-        cliente.empresa_matriz || null,
-        cliente.grupo || null
-      ];
-      await client.query(query, values);
+    const result = await client.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Credenciais inválidas' });
     }
-    res.json({ success: true, message: `Importados ${clientes.length} clientes com sucesso`});
+
+    const usuario = result.rows[0];
+    const senhaValida = await bcrypt.compare(senha, usuario.senha);
+    if (!senhaValida) {
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    const token = jwt.sign({ userId: usuario.id, permissao: usuario.permissao }, JWT_SECRET, { expiresIn: '1h' });
+    res.json({ success: true, token, permissao: usuario.permissao });
   } catch (error) {
-    res.status(500).json({ success: false, error: `Erro ao importar clientes: ${error.message}` });
+    console.error('Erro no login:', error);
+    res.status(500).json({ error: 'Erro ao autenticar' });
   } finally {
     await client.end();
   }
 });
 
-// Rota para obter todos os clientes
+app.post('/api/ocorrencias', autenticar('Gestor'), async (req, res) => {
+  const {
+    data_ocorrencia, setor, descricao, cliente_impactado, valor_desconto, tipo_desconto,
+    colaborador_nome, colaborador_cargo, advertido, tipo_advertencia, advertencia_outra,
+    cliente_comunicado, meio_comunicacao, comunicacao_outro, acoes_imediatas,
+    acoes_corretivas, acoes_preventivas, responsavel_nome, responsavel_data
+  } = req.body;
+
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+
+  try {
+    await client.connect();
+    const result = await client.query(
+      `INSERT INTO ocorrencias (
+        data_ocorrencia, setor, descricao, cliente_impactado, valor_desconto, tipo_desconto,
+        colaborador_nome, colaborador_cargo, advertido, tipo_advertencia, advertencia_outra,
+        cliente_comunicado, meio_comunicacao, comunicacao_outro, acoes_imediatas,
+        acoes_corretivas, acoes_preventivas, responsavel_nome, responsavel_data, criado_por
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+      RETURNING id`,
+      [
+        data_ocorrencia, setor, descricao, cliente_impactado, valor_desconto, tipo_desconto,
+        colaborador_nome, colaborador_cargo, advertido, tipo_advertencia, advertencia_outra,
+        cliente_comunicado, meio_comunicacao, comunicacao_outro, acoes_imediatas,
+        acoes_corretivas, acoes_preventivas, responsavel_nome, responsavel_data, req.user.userId
+      ]
+    );
+    res.json({ success: true, message: 'Ocorrência registrada com sucesso', id: result.rows[0].id });
+  } catch (error) {
+    console.error('Erro ao registrar ocorrência:', error);
+    res.status(500).json({ error: 'Erro ao registrar ocorrência' });
+  } finally {
+    await client.end();
+  }
+});
+
+app.get('/api/ocorrencias', autenticar('Gerente'), async (req, res) => {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+
+  try {
+    await client.connect();
+    const result = await client.query('SELECT * FROM ocorrencias ORDER BY data_ocorrencia DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erro ao listar ocorrências:', error);
+    res.status(500).json({ error: 'Erro ao listar ocorrências' });
+  } finally {
+    await client.end();
+  }
+});
+
+// Rotas existentes para clientes
 app.get('/api/clientes', async (req, res) => {
   const client = new Client({
-    connectionString: process.env.DATABASE_URL || 'postgresql://clientes_v6h2_user:Ae7UBJJzSN9bivs5Q0fvc7SYYrLP3liz@dpg-d0v0fjndiees73cc6d0g-a.oregon-postgres.render.com/clientes_v6h2',
+    connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
   try {
@@ -114,88 +140,55 @@ app.get('/api/clientes', async (req, res) => {
     const result = await client.query('SELECT * FROM clientes ORDER BY id');
     res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ error: `Erro ao buscar clientes: ${error.message}` });
+    console.error('Erro ao buscar clientes:', error);
+    res.status(500).json({ error: 'Erro ao buscar clientes' });
   } finally {
     await client.end();
   }
 });
 
-// Rota para adicionar um cliente
-app.post('/api/clientes', async (req, res) => {
-  const cliente = req.body;
+app.post('/api/clientes/import', async (req, res) => {
+  const clientes = req.body;
   const client = new Client({
-    connectionString: process.env.DATABASE_URL || 'postgresql://clientes_v6h2_user:Ae7UBJJzSN9bivs5Q0fvc7SYYrLP3liz@dpg-d0v0fjndiees73cc6d0g-a.oregon-postgres.render.com/clientes_v6h2',
+    connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
-  try {
-    await client.connect();
-    const query = `
-      INSERT INTO clientes (
-        codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, 
-        tipo_pessoa, estado, municipio, status, possui_ie, ie, filial, 
-        empresa_matriz, grupo
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      RETURNING *;
-    `;
-    const values = [
-      cliente.codigo, cliente.nome, cliente.razao_social, cliente.cpf_cnpj,
-      cliente.regime_fiscal, cliente.situacao, cliente.tipo_pessoa, cliente.estado,
-      cliente.municipio, cliente.status, cliente.possui_ie, cliente.ie,
-      cliente.filial, cliente.empresa_matriz, cliente.grupo
-    ];
-    const result = await client.query(query, values);
-    res.json({ success: true, cliente: result.rows[0] });
-  } catch (error) {
-    res.status(500).json({ success: false, error: `Erro ao adicionar cliente: ${error.message}` });
-  } finally {
-    await client.end();
-  }
-});
 
-// Rota para atualizar um cliente
-app.put('/api/clientes/:id', async (req, res) => {
-  const { id } = req.params;
-  const cliente = req.body;
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL || 'postgresql://clientes_v6h2_user:Ae7UBJJzSN9bivs5Q0fvc7SYYrLP3liz@dpg-d0v0fjndiees73cc6d0g-a.oregon-postgres.render.com/clientes_v6h2',
-    ssl: { rejectUnauthorized: false }
-  });
   try {
     await client.connect();
-    const query = `
-      UPDATE clientes 
-      SET codigo = $1, nome = $2, razao_social = $3, cpf_cnpj = $4, 
-          regime_fiscal = $5, situacao = $6, tipo_pessoa = $7, estado = $8, 
-          municipio = $9, status = $10, possui_ie = $11, ie = $12, 
-          filial = $13, empresa_matriz = $14, grupo = $15, 
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = $16
-      RETURNING *;
-    `;
-    const values = [
-      cliente.codigo, cliente.nome, cliente.razao_social, cliente.cpf_cnpj,
-      cliente.regime_fiscal, cliente.situacao, cliente.tipo_pessoa, cliente.estado,
-      cliente.municipio, cliente.status, cliente.possui_ie, cliente.ie,
-      cliente.filial, cliente.empresa_matriz, cliente.grupo, id
-    ];
-    const result = await client.query(query, values);
-    if (result.rows.length === 0) {
-      res.status(404).json({ success: false, error: 'Cliente não encontrado' });
-    } else {
-      res.json({ success: true, cliente: result.rows[0] });
+    for (const cliente of clientes) {
+      await client.query(
+        `INSERT INTO clientes (
+          codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
+          estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        ON CONFLICT (codigo) DO UPDATE SET
+          nome = EXCLUDED.nome, razao_social = EXCLUDED.razao_social, cpf_cnpj = EXCLUDED.cpf_cnpj,
+          regime_fiscal = EXCLUDED.regime_fiscal, situacao = EXCLUDED.situacao,
+          tipo_pessoa = EXCLUDED.tipo_pessoa, estado = EXCLUDED.estado, municipio = EXCLUDED.municipio,
+          status = EXCLUDED.status, possui_ie = EXCLUDED.possui_ie, ie = EXCLUDED.ie,
+          filial = EXCLUDED.filial, empresa_matriz = EXCLUDED.empresa_matriz, grupo = EXCLUDED.grupo`,
+        [
+          cliente.codigo, cliente.nome, cliente.razao_social, cliente.cpf_cnpj,
+          cliente.regime_fiscal, cliente.situacao, cliente.tipo_pessoa, cliente.estado,
+          cliente.municipio, cliente.status, cliente.possui_ie, cliente.ie, cliente.filial,
+          cliente.empresa_matriz, cliente.grupo
+        ]
+      );
     }
+    res.json({ success: true, message: 'Clientes importados com sucesso' });
   } catch (error) {
-    res.status(500).json({ success: false, error: `Erro ao atualizar cliente: ${error.message}` });
+    console.error('Erro ao importar clientes:', error);
+    res.status(500).json({ error: 'Erro ao importar clientes' });
   } finally {
     await client.end();
   }
 });
 
-// Rota para excluir um cliente
 app.delete('/api/clientes/:id', async (req, res) => {
   const { id } = req.params;
   const client = new Client({
-    connectionString: process.env.DATABASE_URL || 'postgresql://clientes_v6h2_user:Ae7UBJJzSN9bivs5Q0fvc7SYYrLP3liz@dpg-d0v0fjndiees73cc6d0g-a.oregon-postgres.render.com/clientes_v6h2',
+    connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
   try {
@@ -207,34 +200,14 @@ app.delete('/api/clientes/:id', async (req, res) => {
       res.json({ success: true, message: 'Cliente excluído com sucesso' });
     }
   } catch (error) {
-    res.status(500).json({ success: false, error: `Erro ao excluir cliente: ${error.message}` });
+    console.error('Erro ao excluir cliente:', error);
+    res.status(500).json({ error: 'Erro ao excluir cliente' });
   } finally {
     await client.end();
   }
 });
 
-// Servir arquivos HTML
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.get('/ocorrencias', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'ocorrencias.html'));
-});
-
-// Iniciar o servidor
-app.listen(port, async () => {
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL || 'postgresql://clientes_v6h2_user:Ae7UBJJzSN9bivs5Q0fvc7SYYrLP3liz@dpg-d0v0fjndiees73cc6d0g-a.oregon-postgres.render.com/clientes_v6h2',
-    ssl: { rejectUnauthorized: false }
-  });
-  try {
-    await client.connect();
-    await criarTabelaClientes(client);
-  } catch (error) {
-    console.error('Erro ao inicializar o banco:', error.message);
-  } finally {
-    await client.end();
-  }
-  console.log(`Servidor rodando em http://localhost:${port}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
