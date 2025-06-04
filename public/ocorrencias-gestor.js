@@ -1,32 +1,37 @@
-const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://crm-pb-web.onrender.com';
-
 function showSuccessToast(message) {
   const toast = document.getElementById('successToast');
-  document.getElementById('successToastMessage').textContent = message;
-  const bsToast = new bootstrap.Toast(toast);
-  bsToast.show();
+  const toastMessage = document.getElementById('successToastMessage');
+  if (toast && toastMessage) {
+    toastMessage.textContent = message;
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+  } else {
+    console.error('Toast elements not found:', { toast, toastMessage });
+    alert(message);
+  }
 }
 
 function showErrorToast(message) {
   const toast = document.getElementById('errorToast');
-  document.getElementById('errorToastMessage').textContent = message;
-  const bsToast = new bootstrap.Toast(toast);
-  bsToast.show();
-}
-
-function logout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('permissao');
-  window.location.href = 'login.html';
+  const toastMessage = document.getElementById('errorToastMessage');
+  if (toast && toastMessage) {
+    toastMessage.textContent = message;
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+  } else {
+    console.error('Toast elements not found:', { toast, toastMessage });
+    alert(message);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('Inicializando ocorrencias-gestor.js');
   const token = localStorage.getItem('token');
   const permissao = localStorage.getItem('permissao');
   const permissoesPermitidas = ['Gerente', 'Gestor'];
 
   if (!token || !permissoesPermitidas.includes(permissao)) {
-    showErrorToast('Acesso negado. Faça login como Gestor.');
+    showErrorToast('Acesso negado. Faça login como Gerente ou Gestor.');
     setTimeout(() => window.location.href = 'login.html', 1000);
     return;
   }
@@ -40,6 +45,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const meioComunicacaoContainer = document.getElementById('meio_comunicacao_container');
   const comunicacaoOutroContainer = document.getElementById('comunicacao_outro_container');
   const meioComunicacaoSelect = document.getElementById('meio_comunicacao');
+
+  if (!form || !advertidoSelect || !tipoAdvertenciaContainer || !advertenciaOutraContainer ||
+      !tipoAdvertenciaSelect || !clienteComunicadoSelect || !meioComunicacaoContainer ||
+      !comunicacaoOutroContainer || !meioComunicacaoSelect) {
+    console.error('Elementos do formulário não encontrados');
+    showErrorToast('Erro: Formulário não carregado corretamente.');
+    return;
+  }
 
   advertidoSelect.addEventListener('change', () => {
     tipoAdvertenciaContainer.style.display = advertidoSelect.value === 'Sim' ? 'block' : 'none';
@@ -61,6 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    console.log('Submetendo formulário de ocorrência');
     const ocorrencia = {
       data_ocorrencia: document.getElementById('data_ocorrencia').value,
       setor: document.getElementById('setor').value,
@@ -84,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     try {
+      console.log('Enviando ocorrência:', ocorrencia);
       const response = await fetch(`${API_BASE_URL}/api/ocorrencias`, {
         method: 'POST',
         headers: {
@@ -92,14 +107,20 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         body: JSON.stringify(ocorrencia)
       });
+      console.log('Resposta do servidor:', response.status);
       const result = await response.json();
       if (result.success) {
         showSuccessToast('Ocorrência registrada com sucesso!');
         form.reset();
+        tipoAdvertenciaContainer.style.display = 'none';
+        advertenciaOutraContainer.style.display = 'none';
+        meioComunicacaoContainer.style.display = 'none';
+        comunicacaoOutroContainer.style.display = 'none';
       } else {
         showErrorToast(result.error || 'Erro ao registrar ocorrência.');
       }
     } catch (error) {
+      console.error('Erro ao enviar ocorrência:', error);
       showErrorToast('Erro ao registrar ocorrência: ' + error.message);
     }
   });
