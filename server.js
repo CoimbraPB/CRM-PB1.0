@@ -44,6 +44,12 @@ function autenticar(permissao) {
 
 app.post('/api/login', async (req, res) => {
   const { email, senha } = req.body;
+  console.log('Tentativa de login:', { email, senha: '****' }); // Log sem expor senha
+  if (!email || !senha) {
+    console.log('Email ou senha não fornecidos');
+    return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+  }
+
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
@@ -52,12 +58,14 @@ app.post('/api/login', async (req, res) => {
   try {
     await client.connect();
     const result = await client.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+    console.log('Resultado da query:', { found: result.rows.length > 0, email });
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
     const usuario = result.rows[0];
     const senhaValida = await bcrypt.compare(senha, usuario.senha);
+    console.log('Senha válida:', senhaValida);
     if (!senhaValida) {
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
