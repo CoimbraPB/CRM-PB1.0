@@ -3,6 +3,44 @@ let clientes = [];
 let paginaAtual = 1;
 const clientesPorPagina = 10;
 
+function renderNavbar() {
+  const permissao = localStorage.getItem('permissao');
+  const navbarLinks = document.getElementById('navbarLinks');
+  if (!navbarLinks) {
+    console.error('Elemento navbarLinks não encontrado');
+    return;
+  }
+
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  let linksHtml = '';
+
+  // Links comuns (Gestor e Gerente)
+  linksHtml += `
+    <a class="nav-link${currentPage === 'index.html' ? ' active' : ''}" href="index.html">Clientes</a>
+    <a class="nav-link${currentPage === 'ocorrencias-gestor.html' ? ' active' : ''}" href="ocorrencias-gestor.html">Ocorrências Gestor</a>
+  `;
+
+  // Link exclusivo para Gerente
+  if (permissao === 'Gerente') {
+    linksHtml += `
+      <a class="nav-link${currentPage === 'historico-ocorrencias.html' ? ' active' : ''}" href="historico-ocorrencias.html">Histórico de Ocorrências</a>
+    `;
+  }
+
+  // Botão Sair
+  linksHtml += `
+    <button class="btn btn-outline-danger btn-sm" onclick="logout()">Sair</button>
+  `;
+
+  navbarLinks.innerHTML = linksHtml;
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('permissao');
+  window.location.href = 'login.html';
+}
+
 async function renderizarClientes() {
   const clientesBody = document.getElementById('clientesBody');
   const paginacaoInfo = document.getElementById('paginacaoInfo');
@@ -325,6 +363,7 @@ function inicializarEventos() {
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM carregado, iniciando eventos...');
+  renderNavbar();
   inicializarEventos();
   renderizarClientes();
 });

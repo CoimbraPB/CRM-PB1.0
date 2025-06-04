@@ -22,6 +22,35 @@ function formatarData(data) {
   return date.toLocaleDateString('pt-BR');
 }
 
+function renderNavbar() {
+  const permissao = localStorage.getItem('permissao');
+  const navbarLinks = document.getElementById('navbarLinks');
+  if (!navbarLinks) return;
+
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  let linksHtml = '';
+
+  // Links comuns (Gestor e Gerente)
+  linksHtml += `
+    <a class="nav-link${currentPage === 'index.html' ? ' active' : ''}" href="index.html">Clientes</a>
+    <a class="nav-link${currentPage === 'ocorrencias-gestor.html' ? ' active' : ''}" href="ocorrencias-gestor.html">Ocorrências Gestor</a>
+  `;
+
+  // Link exclusivo para Gerente
+  if (permissao === 'Gerente') {
+    linksHtml += `
+      <a class="nav-link${currentPage === 'historico-ocorrencias.html' ? ' active' : ''}" href="historico-ocorrencias.html">Histórico de Ocorrências</a>
+    `;
+  }
+
+  // Botão Sair
+  linksHtml += `
+    <button class="btn btn-outline-danger btn-sm" onclick="logout()">Sair</button>
+  `;
+
+  navbarLinks.innerHTML = linksHtml;
+}
+
 function carregarOcorrencias() {
   return new Promise((resolve, reject) => {
     const token = localStorage.getItem('token');
@@ -158,13 +187,11 @@ async function gerarRelatorio() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
-  // Título
   doc.setFontSize(16);
   doc.text(`Relatório de Ocorrências${relatorioSetor ? ' - Setor: ' + relatorioSetor : ''}`, 14, 20);
   doc.setFontSize(12);
   doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 30);
 
-  // Tabela
   const headers = [['ID', 'Data', 'Setor', 'Cliente', 'Descrição']];
   const data = ocorrenciasFiltradas.map(o => [
     o.id,
@@ -181,11 +208,11 @@ async function gerarRelatorio() {
     styles: { fontSize: 10, cellPadding: 2 },
     headStyles: { fillColor: [200, 200, 200] },
     columnStyles: {
-      0: { cellWidth: 20 }, // ID
-      1: { cellWidth: 30 }, // Data
-      2: { cellWidth: 40 }, // Setor
-      3: { cellWidth: 50 }, // Cliente
-      4: { cellWidth: 100 } // Descrição
+      0: { cellWidth: 20 },
+      1: { cellWidth: 30 },
+      2: { cellWidth: 40 },
+      3: { cellWidth: 50 },
+      4: { cellWidth: 100 }
     }
   });
 
@@ -230,7 +257,7 @@ function irParaProximaPagina() {
 function irParaUltimaPagina() {
   const filtroInput = document.getElementById('filtroInput').value.toLowerCase();
   const filtroSetor = document.getElementById('filtroSetor').value;
-  const ocorrenciasFiltradas = fiche.filter(ocorrencia => {
+  const ocorrenciasFiltradas = ocorrencias.filter(ocorrencia => {
     const matchesFiltro = ocorrencia.cliente_impactado.toLowerCase().includes(filtroInput) ||
       ocorrencia.setor.toLowerCase().includes(filtroInput) ||
       ocorrencia.colaborador_nome.toLowerCase().includes(filtroInput);
@@ -242,6 +269,7 @@ function irParaUltimaPagina() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  renderNavbar();
   carregarOcorrencias();
   document.getElementById('filtroInput').addEventListener('input', atualizarTabela);
   document.getElementById('filtroSetor').addEventListener('change', atualizarTabela);

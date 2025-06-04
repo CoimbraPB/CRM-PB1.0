@@ -7,38 +7,36 @@ function showErrorToast(message) {
   bsToast.show();
 }
 
+function login(event) {
+  event.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+
+  fetch(`${API_BASE_URL}/api/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  })
+    .then(response => {
+      if (!response.ok) throw new Error('Credenciais inválidas');
+      return response.json();
+    })
+    .then(data => {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('permissao', data.permissao);
+
+      // Obter URL de redirecionamento da query string
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectUrl = urlParams.get('redirect') || 'index.html';
+      window.location.href = redirectUrl;
+    })
+    .catch(error => {
+      console.error('Erro ao fazer login:', error);
+      showErrorToast('Credenciais inválidas ou erro no servidor.');
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  const loginForm = document.getElementById('loginForm');
-  if (!loginForm) {
-    console.error('Formulário de login não encontrado');
-    return;
-  }
-
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    const senha = document.getElementById('senha').value;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha })
-      });
-      const result = await response.json();
-      if (result.success) {
-        localStorage.setItem('token', result.token);
-        localStorage.setItem('permissao', result.permissao);
-        if (result.permissao === 'Gestor') {
-          window.location.href = 'ocorrencias-gestor.html';
-        } else if (result.permissao === 'Gerente') {
-          window.location.href = 'historico-ocorrencias.html';
-        }
-      } else {
-        showErrorToast(result.error || 'Erro ao autenticar');
-      }
-    } catch (error) {
-      showErrorToast('Erro ao autenticar: ' + error.message);
-    }
-  });
+  const form = document.getElementById('loginForm');
+  if (form) form.addEventListener('submit', login);
 });
