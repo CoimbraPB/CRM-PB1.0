@@ -46,11 +46,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const comunicacaoOutroContainer = document.getElementById('comunicacao_outro_container');
   const meioComunicacaoSelect = document.getElementById('meio_comunicacao');
 
-  if (!form || !advertidoSelect || !tipoAdvertenciaContainer || !advertenciaOutraContainer ||
-      !tipoAdvertenciaSelect || !clienteComunicadoSelect || !meioComunicacaoContainer ||
-      !comunicacaoOutroContainer || !meioComunicacaoSelect) {
-    console.error('Elementos do formulário não encontrados');
-    showErrorToast('Erro: Formulário não carregado corretamente.');
+  const requiredElements = [
+    'ocorrenciaForm', 'advertido', 'tipo_advertencia_container', 'advertencia_outra_container',
+    'tipo_advertencia', 'cliente_comunicado', 'meio_comunicacao_container',
+    'comunicacao_outro_container', 'meio_comunicacao', 'data_ocorrencia', 'setor',
+    'descricao', 'cliente_impactado', 'valor_desconto', 'colaborador_nome',
+    'colaborador_cargo', 'advertencia_outra', 'comunicacao_outro', 'acoes_imediatas',
+    'acoes_corretivas', 'acoes_preventivas', 'responsavel_nome', 'responsavel_data'
+  ];
+
+  const missingElements = requiredElements.filter(id => !document.getElementById(id));
+  if (missingElements.length > 0) {
+    console.error('Elementos do formulário não encontrados:', missingElements);
+    showErrorToast(`Erro: Campos não encontrados no formulário: ${missingElements.join(', ')}`);
     return;
   }
 
@@ -75,13 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     console.log('Submetendo formulário de ocorrência');
+
     const ocorrencia = {
       data_ocorrencia: document.getElementById('data_ocorrencia').value,
       setor: document.getElementById('setor').value,
       descricao: document.getElementById('descricao').value,
       cliente_impactado: document.getElementById('cliente_impactado').value,
       valor_desconto: document.getElementById('valor_desconto').value,
-      tipo_desconto: document.querySelector('input[name="tipo_desconto"]:checked')?.value,
+      tipo_desconto: document.querySelector('input[name="tipo_desconto"]:checked')?.value || '',
       colaborador_nome: document.getElementById('colaborador_nome').value,
       colaborador_cargo: document.getElementById('colaborador_cargo').value,
       advertido: document.getElementById('advertido').value,
