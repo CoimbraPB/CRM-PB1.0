@@ -124,7 +124,6 @@ app.get('/api/ocorrencias', autenticar('Gerente'), async (req, res) => {
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
-
   try {
     await client.connect();
     const result = await client.query('SELECT * FROM ocorrencias ORDER BY data_ocorrencia DESC');

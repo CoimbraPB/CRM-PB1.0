@@ -24,7 +24,7 @@
   <div class="container mt-8 max-w-7xl mx-auto px-4">
     <h1 class="text-3xl font-extrabold text-gray-900 mb-6">Histórico de Ocorrências</h1>
     <div class="flex flex-wrap items-center mb-4 gap-3">
-      <input type="text" id="filtroInput" placeholder="Filtrar por cliente ou setor..." class="form-control rounded-md border border-gray-300 px-3 py-2 w-full max-w-xs">
+      <input type="text" id="filtroInput" placeholder="Filtrar por cliente, setor ou funcionário..." class="form-control rounded-md border border-gray-300 px-3 py-2 w-full max-w-xs">
       <select id="filtroSetor" class="form-select w-full max-w-xs">
         <option value="">Todos os Setores</option>
         <option value="Contábil">Contábil</option>
@@ -42,7 +42,8 @@
             <th>Data</th>
             <th>Setor</th>
             <th>Cliente</th>
-            <th>Descrição</th>
+            <th>Funcionário</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody id="ocorrenciasBody"></tbody>
@@ -57,6 +58,23 @@
         <button class="btn btn-outline-secondary" onclick="irParaPaginaAnterior()">Anterior</button>
         <button class="btn btn-outline-secondary" onclick="irParaProximaPagina()">Próxima</button>
         <button class="btn btn-outline-secondary" onclick="irParaUltimaPagina()">Última</button>
+      </div>
+    </div>
+  </div>
+  <!-- Modal para Detalhes da Ocorrência -->
+  <div class="modal fade" id="detalhesOcorrenciaModal" tabindex="-1" aria-labelledby="detalhesOcorrenciaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="detalhesOcorrenciaModalLabel">Detalhes da Ocorrência</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="detalhesOcorrenciaContent"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        </div>
       </div>
     </div>
   </div>
