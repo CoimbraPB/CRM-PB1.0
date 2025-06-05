@@ -3,6 +3,9 @@ let ocorrencias = [];
 // Usar API_BASE_URL de config.js ou fallback
 const apiBaseUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://crm-pb-web.onrender.com';
 
+// Lista fixa de departamentos
+const DEPARTAMENTOS = ['Fiscal', 'Contábil', 'DP', 'Societário', 'Regularização'];
+
 // Função para formatar data para dd/mm/aaaa
 function formatarData(data) {
   if (!data) return '';
@@ -39,10 +42,11 @@ function showErrorToast(message) {
   }
 }
 
-function popularFiltroSetor(setores) {
+function popularFiltroSetor() {
   const filtroSetor = document.getElementById('filtroSetor');
   if (!filtroSetor) return;
-  setores.sort().forEach(setor => {
+  filtroSetor.innerHTML = '<option value="">Todos</option>';
+  DEPARTAMENTOS.sort().forEach(setor => {
     const option = document.createElement('option');
     option.value = setor;
     option.textContent = setor;
@@ -93,13 +97,14 @@ async function renderizarOcorrencias() {
     ocorrencias = await response.json();
     console.log('Ocorrencias recebidas:', ocorrencias.length);
 
-    // Popular dropdown com setores únicos
-    const setores = [...new Set(ocorrencias.map(o => o.setor).filter(s => s))];
-    filtroSetor.innerHTML = '<option value="">Todos</option>';
-    popularFiltroSetor(setores);
+    // Popular dropdown apenas se ainda não foi populado
+    if (filtroSetor.options.length <= 1) {
+      popularFiltroSetor();
+    }
 
     const filtroTexto = filtroInput.value.toLowerCase();
     const filtroSetorSelecionado = filtroSetor.value;
+    console.log('Filtros aplicados:', { filtroSetorSelecionado, filtroTexto });
 
     const ocorrenciasFiltradas = ocorrencias.filter(ocorrencia => {
       const matchesSetor = !filtroSetorSelecionado || ocorrencia.setor === filtroSetorSelecionado;
@@ -109,6 +114,7 @@ async function renderizarOcorrencias() {
         (ocorrencia.descricao || '').toLowerCase().includes(filtroTexto);
       return matchesSetor && matchesTexto;
     });
+    console.log('Ocorrencias filtradas:', ocorrenciasFiltradas.length);
 
     ocorrenciasBody.innerHTML = '';
     ocorrenciasFiltradas.forEach(ocorrencia => {
@@ -174,6 +180,7 @@ function exportarPDF() {
   const filtroInput = document.getElementById('filtroInput');
   const filtroSetorSelecionado = filtroSetor ? filtroSetor.value : '';
   const filtroTexto = filtroInput ? filtroInput.value.toLowerCase() : '';
+  console.log('Exportando PDF com filtros:', { filtroSetorSelecionado, filtroTexto });
 
   const ocorrenciasFiltradas = ocorrencias.filter(ocorrencia => {
     const matchesSetor = !filtroSetorSelecionado || ocorrencia.setor === filtroSetorSelecionado;
@@ -252,6 +259,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   filtroInput.addEventListener('input', filtrarOcorrencias);
-  filtroSetor.addEventListener('change', filtrarOcorrencias);
+  filtroSetor.addEventListener('change', () => {
+    console.log('Setor selecionado:', filtroSetor.value);
+    filtrarOcorrencias();
+  });
   renderizarOcorrencias();
 });
