@@ -216,7 +216,7 @@ app.post('/api/ocorrencias-crm', autenticar(['Operador', 'Gerente']), async (req
 });
 
 // Rota de Clientes (ajustada com autenticação)
-app.get('/api/clientes', autenticar(['Operador', 'Gerente']), async (req, res) => {
+app.get('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
