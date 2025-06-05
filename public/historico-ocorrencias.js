@@ -1,125 +1,115 @@
-const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://crm-pb-web.onrender.com';
-const OCORRENCIAS_POR_PAGINA = 10;
-let paginaAtual = 1;
 let ocorrencias = [];
+
+function showSuccessToast(message) {
+  const toast = document.getElementById('successToast');
+  const toastMessage = document.getElementById('successToastMessage');
+  if (toast && toastMessage) {
+    toastMessage.textContent = message;
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+  } else {
+    console.error('Toast elements not found:', { toast, toastMessage });
+    alert(message);
+  }
+}
 
 function showErrorToast(message) {
   const toast = document.getElementById('errorToast');
-  document.getElementById('errorToastMessage').textContent = message;
-  const bsToast = new bootstrap.Toast(toast);
-  bsToast.show();
+  const toastMessage = document.getElementById('errorToastMessage');
+  if (toast && toastMessage) {
+    toastMessage.textContent = message;
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+  } else {
+    console.error('Toast elements not found:', { toast, toastMessage });
+    alert(message);
+  }
 }
 
-function logout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('permissao');
-  window.location.href = 'login.html';
-}
-
-function formatarData(data) {
-  if (!data) return 'N/A';
-  const date = new Date(data);
-  return date.toLocaleDateString('pt-BR');
-}
-
-function renderNavbar() {
-  const permissao = localStorage.getItem('permissao');
-  const navbarLinks = document.getElementById('navbarLinks');
-  if (!navbarLinks) return;
-
-  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-  let linksHtml = '';
-
-  // Links comuns (Gestor e Gerente)
-  linksHtml += `
-    <a class="nav-link${currentPage === 'index.html' ? ' active' : ''}" href="index.html">Clientes</a>
-    <a class="nav-link${currentPage === 'ocorrencias-gestor.html' ? ' active' : ''}" href="ocorrencias-gestor.html">Ocorrências Gestor</a>
-  `;
-
-  // Link exclusivo para Gerente
-  if (permissao === 'Gerente') {
-    linksHtml += `
-      <a class="nav-link${currentPage === 'historico-ocorrencias.html' ? ' active' : ''}" href="historico-ocorrencias.html">Histórico de Ocorrências</a>
-    `;
+async function renderizarOcorrencias() {
+  console.log('Rendering ocorrencias');
+  const ocorrenciasBody = document.getElementById('ocorrenciasBody');
+  const filtroInput = document.getElementById('filtroInput');
+  if (!ocorrenciasBody || !filtroInput) {
+    console.error('Elementos DOM não encontrados:', { ocorrenciasBody, filtroInput });
+    showErrorToast('Erro: Interface não carregada corretamente.');
+    return;
   }
 
-  // Botão Sair
-  linksHtml += `
-    <button class="btn btn-outline-danger btn-sm" onclick="logout()">Sair</button>
-  `;
-
-  navbarLinks.innerHTML = linksHtml;
-}
-
-function carregarOcorrencias() {
-  return new Promise((resolve, reject) => {
+  try {
     const token = localStorage.getItem('token');
-    const permissao = localStorage.getItem('permissao');
-    if (!token || permissao !== 'Gerente') {
-      showErrorToast('Acesso negado. Faça login como Gerente.');
-      setTimeout(() => window.location.href = 'login.html', 1000);
-      reject(new Error('Acesso negado'));
-      return;
+    console.log('Token:', token ? 'Present' : 'Missing');
+    if (!token) {
+      throw new Error('Token de autenticação ausente. Faça login novamente.');
     }
 
-    fetch(`${API_BASE_URL}/api/ocorrencias`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-      .then(response => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.json();
-      })
-      .then(data => {
-        console.log('Dados recebidos:', data);
-        ocorrencias = data;
-        atualizarTabela();
-        resolve();
-      })
-      .catch(error => {
-        console.error('Erro ao carregar ocorrências:', error);
-        showErrorToast('Erro ao carregar ocorrências.');
-        reject(error);
-      });
-  });
-}
+    console.log('Enviando requisição para:', `${API_BASE_URL}/api/ocorrencias`);
+    const response = await fetch(`${API_BASE_URL}/api/ocorrencias`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log('Ocorrencias response:', response.status, response.statusText);
 
-function atualizarTabela() {
-  const filtroInput = document.getElementById('filtroInput').value.toLowerCase();
-  const filtroSetor = document.getElementById('filtroSetor').value;
-  const tbody = document.getElementById('ocorrenciasBody');
-  tbody.innerHTML = '';
+    if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('permissao');
+        showErrorToast('Sessão expirada. Faça login novamente.');
+        setTimeout(() => window.location.href = 'login.html', 1000);
+        return;
+      }
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
 
-  const ocorrenciasFiltradas = ocorrencias.filter(ocorrencia => {
-    const matchesFiltro = ocorrencia.cliente_impactado.toLowerCase().includes(filtroInput) ||
-      ocorrencia.setor.toLowerCase().includes(filtroInput) ||
-      ocorrencia.colaborador_nome.toLowerCase().includes(filtroInput);
-    const matchesSetor = !filtroSetor || ocorrencia.setor === filtroSetor;
-    return matchesFiltro && matchesSetor;
-  });
+    ocorrencias = await response.json();
+    console.log('Ocorrencias recebidas:', ocorrencias.length);
 
-  const totalPaginas = Math.ceil(ocorrenciasFiltradas.length / OCORRENCIAS_POR_PAGINA);
-  const inicio = (paginaAtual - 1) * OCORRENCIAS_POR_PAGINA;
-  const fim = inicio + OCORRENCIAS_POR_PAGINA;
-  const ocorrenciasPaginadas = ocorrenciasFiltradas.slice(inicio, fim);
+    const filtro = filtroInput.value.toLowerCase();
+    const ocorrenciasFiltradas = ocorrencias.filter(ocorrencia =>
+      (ocorrencia.setor || '').toLowerCase().includes(filtro) ||
+      (ocorrencia.cliente_impactado || '').toLowerCase().includes(filtro) ||
+      (ocorrencia.descricao || '').toLowerCase().includes(filtro)
+    );
 
-  ocorrenciasPaginadas.forEach(ocorrencia => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${ocorrencia.id}</td>
-      <td>${formatarData(ocorrencia.data_ocorrencia)}</td>
-      <td>${ocorrencia.setor}</td>
-      <td>${ocorrencia.cliente_impactado}</td>
-      <td>${ocorrencia.colaborador_nome}</td>
-      <td>
-        <button class="btn btn-primary btn-sm" onclick="mostrarDetalhes(${ocorrencia.id})">
-          <i class="bi bi-eye"></i> Visualizar
-        </button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  document.getElementById('paginacaoInfo').textContent = `Página ${paginaAtual} de ${totalPaginas} (${ocorrenciasFiltradas.length} ocorrências)`;
+    ocorrenciasBody.innerHTML = '';
+    ocorrenciasFiltradas.forEach(ocorrencia => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${ocorrencia.id || ''}</td>
+        <td>${ocorrencia.data_ocorrencia || ''}</td>
+        <td>${ocorrencia.setor || ''}</td>
+        <td>${ocorrencia.descricao || ''}</td>
+        <td>${ocorrencia.cliente_impactado || ''}</td>
+        <td>${ocorrencia.valor_desconto || ''}</td>
+        <td>${ocorrencia.tipo_desconto || ''}</td>
+        <td>${ocorrencia.colaborador_nome || ''}</td>
+        <td>${ocorrencia.colaborador_cargo || ''}</td>
+        <td>${ocorrencia.advertido || ''}</td>
+        <td>${ocorrencia.tipo_advertencia || ''}</td>
+        <td>${ocorrencia.advertencia_outra || ''}</td>
+        <td>${ocorrencia.cliente_comunicado || ''}</td>
+        <td>${ocorrencia.meio_comunicacao || ''}</td>
+        <td>${ocorrencia.comunicacao_outro || ''}</td>
+        <td>${ocorrencia.acoes_imediatas || ''}</td>
+        <td>${ocorrencia.acoes_corretivas || ''}</td>
+        <td>${ocorrencia.acoes_preventivas || ''}</td>
+        <td>${ocorrencia.responsavel_nome || ''}</td>
+        <td>${ocorrencia.responsavel_data || ''}</td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="mostrarDetalhes(${ocorrencia.id})">
+            <i class="bi bi-eye-fill"></i> Detalhes
+          </button>
+        </td>
+      `;
+      ocorrenciasBody.appendChild(tr);
+    });
+  } catch (error) {
+    console.error('Erro ao carregar ocorrências:', error);
+    showErrorToast('Erro ao carregar ocorrências: ' + error.message);
+  }
 }
 
 function mostrarDetalhes(id) {
@@ -129,148 +119,110 @@ function mostrarDetalhes(id) {
     return;
   }
 
-  const content = `
-    <p><strong>ID:</strong> ${ocorrencia.id}</p>
-    <p><strong>Data:</strong> ${formatarData(ocorrencia.data_ocorrencia)}</p>
-    <p><strong>Setor:</strong> ${ocorrencia.setor}</p>
-    <p><strong>Cliente Impactado:</strong> ${ocorrencia.cliente_impactado}</p>
-    <p><strong>Descrição:</strong> ${ocorrencia.descricao}</p>
-    <p><strong>Valor do Desconto:</strong> ${ocorrencia.valor_desconto || 'N/A'}</p>
-    <p><strong>Tipo de Desconto:</strong> ${ocorrencia.tipo_desconto || 'N/A'}</p>
-    <p><strong>Colaborador:</strong> ${ocorrencia.colaborador_nome} (${ocorrencia.colaborador_cargo || 'N/A'})</p>
-    <p><strong>Advertido:</strong> ${ocorrencia.advertido}</p>
-    <p><strong>Tipo de Advertência:</strong> ${ocorrencia.tipo_advertencia || 'N/A'}</p>
-    <p><strong>Advertência Outra:</strong> ${ocorrencia.advertencia_outra || 'N/A'}</p>
-    <p><strong>Cliente Comunicado:</strong> ${ocorrencia.cliente_comunicado}</p>
-    <p><strong>Meio de Comunicação:</strong> ${ocorrencia.meio_comunicacao || 'N/A'}</p>
-    <p><strong>Comunicação Outro:</strong> ${ocorrencia.comunicacao_outro || 'N/A'}</p>
-    <p><strong>Ações Imediatas:</strong> ${ocorrencia.acoes_imediatas || 'N/A'}</p>
-    <p><strong>Ações Corretivas:</strong> ${ocorrencia.acoes_corretivas || 'N/A'}</p>
-    <p><strong>Ações Preventivas:</strong> ${ocorrencia.acoes_preventivas || 'N/A'}</p>
-    <p><strong>Responsável:</strong> ${ocorrencia.responsavel_nome} (${formatarData(ocorrencia.responsavel_data)})</p>
-    <p><strong>Criado Por:</strong> ${ocorrencia.criado_por}</p>
+  const detalhesContent = document.getElementById('detalhesContent');
+  detalhesContent.innerHTML = `
+    <p><strong>ID:</strong> ${ocorrencia.id || '-'}</p>
+    <p><strong>Data da Ocorrência:</strong> ${ocorrencia.data_ocorrencia || '-'}</p>
+    <p><strong>Setor:</strong> ${ocorrencia.setor || '-'}</p>
+    <p><strong>Descrição:</strong> ${ocorrencia.descricao || '-'}</p>
+    <p><strong>Cliente Impactado:</strong> ${ocorrencia.cliente_impactado || '-'}</p>
+    <p><strong>Valor do Desconto:</strong> ${ocorrencia.valor_desconto || '-'}</p>
+    <p><strong>Tipo de Desconto:</strong> ${ocorrencia.tipo_desconto || '-'}</p>
+    <p><strong>Colaborador Nome:</strong> ${ocorrencia.colaborador_nome || '-'}</p>
+    <p><strong>Colaborador Cargo:</strong> ${ocorrencia.colaborador_cargo || '-'}</p>
+    <p><strong>Advertido:</strong> ${ocorrencia.advertido || '-'}</p>
+    <p><strong>Tipo de Advertência:</strong> ${ocorrencia.tipo_advertencia || '-'}</p>
+    <p><strong>Advertência Outra:</strong> ${ocorrencia.advertencia_outra || '-'}</p>
+    <p><strong>Cliente Comunicado:</strong> ${ocorrencia.cliente_comunicado || '-'}</p>
+    <p><strong>Meio de Comunicação:</strong> ${ocorrencia.meio_comunicacao || '-'}</p>
+    <p><strong>Comunicação Outro:</strong> ${ocorrencia.comunicacao_outro || '-'}</p>
+    <p><strong>Ações Imediatas:</strong> ${ocorrencia.acoes_imediatas || '-'}</p>
+    <p><strong>Ações Corretivas:</strong> ${ocorrencia.acoes_corretivas || '-'}</p>
+    <p><strong>Ações Preventivas:</strong> ${ocorrencia.acoes_preventivas || '-'}</p>
+    <p><strong>Responsável Nome:</strong> ${ocorrencia.responsavel_nome || '-'}</p>
+    <p><strong>Responsável Data:</strong> ${ocorrencia.responsavel_data || '-'}</p>
   `;
-  document.getElementById('detalhesOcorrenciaContent').innerHTML = content;
 
-  const modal = new bootstrap.Modal(document.getElementById('detalhesOcorrenciaModal'));
+  const modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
   modal.show();
 }
 
-async function gerarRelatorio() {
+function exportarPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape' });
+  doc.text('Histórico de Ocorrências', 14, 10);
+  doc.autoTable({
+    head: [
+      [
+        'ID', 'Data', 'Setor', 'Descrição', 'Cliente Impactado', 'Valor Desconto',
+        'Tipo Desconto', 'Colaborador Nome', 'Colaborador Cargo', 'Advertido',
+        'Tipo Advertência', 'Advertência Outra', 'Cliente Comunicado',
+        'Meio Comunicação', 'Comunicação Outro', 'Ações Imediatas',
+        'Ações Corretivas', 'Ações Preventivas', 'Responsável Nome',
+        'Responsável Data'
+      ]
+    ],
+    body: ocorrencias.map(ocorrencia => [
+      ocorrencia.id || '',
+      ocorrencia.data_ocorrencia || '',
+      ocorrencia.setor || '',
+      ocorrencia.descricao || '',
+      ocorrencia.cliente_impactado || '',
+      ocorrencia.valor_desconto || '',
+      ocorrencia.tipo_desconto || '',
+      ocorrencia.colaborador_nome || '',
+      ocorrencia.colaborador_cargo || '',
+      ocorrencia.advertido || '',
+      ocorrencia.tipo_advertencia || '',
+      ocorrencia.advertencia_outra || '',
+      ocorrencia.cliente_comunicado || '',
+      ocorrencia.meio_comunicacao || '',
+      ocorrencia.comunicacao_outro || '',
+      ocorrencia.acoes_imediatas || '',
+      ocorrencia.acoes_corretivas || '',
+      ocorrencia.acoes_preventivas || '',
+      ocorrencia.responsavel_nome || '',
+      ocorrencia.responsavel_data || ''
+    ]),
+    styles: { fontSize: 8 },
+    columnStyles: { 3: { cellWidth: 30 } } // Ajuste para descrição longa
+  });
+  doc.save('historico_ocorrencias.pdf');
+}
+
+function exportarJSON() {
+  const dataStr = JSON.stringify(ocorrencias, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'historico_ocorrencias.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function filtrarOcorrencias() {
+  renderizarOcorrencias();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('Inicializando historico-ocorrencias.js');
   const token = localStorage.getItem('token');
   const permissao = localStorage.getItem('permissao');
+
   if (!token || permissao !== 'Gerente') {
     showErrorToast('Acesso negado. Faça login como Gerente.');
     setTimeout(() => window.location.href = 'login.html', 1000);
     return;
   }
 
-  try {
-    await carregarOcorrencias();
-  } catch (error) {
-    showErrorToast('Erro ao carregar dados para o relatório.');
+  const filtroInput = document.getElementById('filtroInput');
+  if (!filtroInput) {
+    console.error('Filtro input não encontrado');
+    showErrorToast('Erro: Interface não carregada corretamente.');
     return;
   }
 
-  const relatorioSetor = document.getElementById('relatorioSetor').value;
-  console.log('Setor selecionado:', relatorioSetor);
-  const ocorrenciasFiltradas = relatorioSetor
-    ? ocorrencias.filter(o => o.setor === relatorioSetor)
-    : ocorrencias;
-
-  console.log('Ocorrências filtradas:', ocorrenciasFiltradas);
-  if (ocorrenciasFiltradas.length === 0) {
-    showErrorToast(`Nenhuma ocorrência encontrada para o setor ${relatorioSetor || 'selecionado'}.`);
-    return;
-  }
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-
-  doc.setFontSize(16);
-  doc.text(`Relatório de Ocorrências${relatorioSetor ? ' - Setor: ' + relatorioSetor : ''}`, 14, 20);
-  doc.setFontSize(12);
-  doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 30);
-
-  const headers = [['ID', 'Data', 'Setor', 'Cliente', 'Descrição']];
-  const data = ocorrenciasFiltradas.map(o => [
-    o.id,
-    formatarData(o.data_ocorrencia),
-    o.setor,
-    o.cliente_impactado,
-    o.descricao
-  ]);
-
-  doc.autoTable({
-    head: headers,
-    body: data,
-    startY: 40,
-    styles: { fontSize: 10, cellPadding: 2 },
-    headStyles: { fillColor: [200, 200, 200] },
-    columnStyles: {
-      0: { cellWidth: 20 },
-      1: { cellWidth: 30 },
-      2: { cellWidth: 40 },
-      3: { cellWidth: 50 },
-      4: { cellWidth: 100 }
-    }
-  });
-
-  try {
-    doc.save(`relatorio_ocorrencias${relatorioSetor ? '_' + relatorioSetor.toLowerCase() : ''}_${new Date().toISOString().slice(0,10)}.pdf`);
-    console.log('PDF gerado com sucesso');
-  } catch (error) {
-    console.error('Erro ao gerar PDF:', error);
-    showErrorToast('Erro ao gerar relatório.');
-  }
-}
-
-function irParaPrimeiraPagina() {
-  paginaAtual = 1;
-  atualizarTabela();
-}
-
-function irParaPaginaAnterior() {
-  if (paginaAtual > 1) {
-    paginaAtual--;
-    atualizarTabela();
-  }
-}
-
-function irParaProximaPagina() {
-  const filtroInput = document.getElementById('filtroInput').value.toLowerCase();
-  const filtroSetor = document.getElementById('filtroSetor').value;
-  const ocorrenciasFiltradas = ocorrencias.filter(ocorrencia => {
-    const matchesFiltro = ocorrencia.cliente_impactado.toLowerCase().includes(filtroInput) ||
-      ocorrencia.setor.toLowerCase().includes(filtroInput) ||
-      ocorrencia.colaborador_nome.toLowerCase().includes(filtroInput);
-    const matchesSetor = !filtroSetor || ocorrencia.setor === filtroSetor;
-    return matchesFiltro && matchesSetor;
-  });
-  const totalPaginas = Math.ceil(ocorrenciasFiltradas.length / OCORRENCIAS_POR_PAGINA);
-  if (paginaAtual < totalPaginas) {
-    paginaAtual++;
-    atualizarTabela();
-  }
-}
-
-function irParaUltimaPagina() {
-  const filtroInput = document.getElementById('filtroInput').value.toLowerCase();
-  const filtroSetor = document.getElementById('filtroSetor').value;
-  const ocorrenciasFiltradas = ocorrencias.filter(ocorrencia => {
-    const matchesFiltro = ocorrencia.cliente_impactado.toLowerCase().includes(filtroInput) ||
-      ocorrencia.setor.toLowerCase().includes(filtroInput) ||
-      ocorrencia.colaborador_nome.toLowerCase().includes(filtroInput);
-    const matchesSetor = !filtroSetor || ocorrencia.setor === filtroSetor;
-    return matchesFiltro && matchesSetor;
-  });
-  paginaAtual = Math.ceil(ocorrenciasFiltradas.length / OCORRENCIAS_POR_PAGINA);
-  atualizarTabela();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  renderNavbar();
-  carregarOcorrencias();
-  document.getElementById('filtroInput').addEventListener('input', atualizarTabela);
-  document.getElementById('filtroSetor').addEventListener('change', atualizarTabela);
+  filtroInput.addEventListener('input', filtrarOcorrencias);
+  renderizarOcorrencias();
 });

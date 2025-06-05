@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 
-const senha = 'gestor123';
+const senha = 'admin123'; // Substitua pela senha desejada
 const saltRounds = 10;
 
 bcrypt.hash(senha, saltRounds, (err, hash) => {
