@@ -1,5 +1,8 @@
 let ocorrencias = [];
 
+// Fallback para API_BASE_URL
+const API_BASE_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://crm-pb-web.onrender.com';
+
 function showSuccessToast(message) {
   const toast = document.getElementById('successToast');
   const toastMessage = document.getElementById('successToastMessage');
@@ -43,6 +46,7 @@ async function renderizarOcorrencias() {
       throw new Error('Token de autenticação ausente. Faça login novamente.');
     }
 
+    console.log('API_BASE_URL:', API_BASE_URL);
     console.log('Enviando requisição para:', `${API_BASE_URL}/api/ocorrencias`);
     const response = await fetch(`${API_BASE_URL}/api/ocorrencias`, {
       method: 'GET',
@@ -207,6 +211,7 @@ function filtrarOcorrencias() {
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Inicializando historico-ocorrencias.js');
+  console.log('API_BASE_URL disponível:', typeof API_BASE_URL !== 'undefined');
   const token = localStorage.getItem('token');
   const permissao = localStorage.getItem('permissao');
 
