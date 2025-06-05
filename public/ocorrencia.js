@@ -1,5 +1,5 @@
 let ocorrencias = [];
-let clientes = [];
+let clientesOcorrencias = [];
 
 const apiBaseUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://crm-pb-web.onrender.com';
 
@@ -49,8 +49,13 @@ function showErrorToast(message) {
 }
 
 async function popularClientes() {
+  console.log('Iniciando popularClientes');
   try {
     const token = localStorage.getItem('token');
+    console.log('Token para GET /api/clientes:', token ? 'Presente' : 'Ausente');
+    if (!token) {
+      throw new Error('Token de autenticação ausente.');
+    }
     const response = await fetch(`${apiBaseUrl}/api/clientes`, {
       method: 'GET',
       headers: {
@@ -58,21 +63,30 @@ async function popularClientes() {
         'Content-Type': 'application/json'
       }
     });
+    console.log('Resposta GET /api/clientes:', response.status, response.statusText);
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(`HTTP error! Status: ${response.status}, Mensagem: ${errorData.error || 'Desconhecida'}`);
     }
-    clientes = await response.json();
+    clientesOcorrencias = await response.json();
+    console.log('Clientes recebidos:', clientesOcorrencias.length, clientesOcorrencias);
     const clienteSelect = document.getElementById('clienteId');
+    if (!clienteSelect) {
+      console.error('Elemento clienteId não encontrado');
+      showErrorToast('Erro: Elemento de seleção de clientes não encontrado.');
+      return;
+    }
     clienteSelect.innerHTML = '<option value="">Selecione um cliente</option>';
-    clientes.forEach(cliente => {
+    clientesOcorrencias.forEach(cliente => {
       const option = document.createElement('option');
       option.value = cliente.id;
       option.textContent = `${cliente.codigo} - ${cliente.nome}`;
       clienteSelect.appendChild(option);
     });
+    console.log('Dropdown de clientes populado com sucesso');
   } catch (error) {
     console.error('Erro ao carregar clientes:', error);
-    showErrorToast('Erro ao carregar lista de clientes.');
+    showErrorToast('Erro ao carregar lista de clientes: ' + error.message);
   }
 }
 
@@ -109,15 +123,16 @@ async function renderizarOcorrencias() {
         setTimeout(() => window.location.href = 'login.html', 1000);
         return;
       }
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(`HTTP error! Status: ${response.status}, Mensagem: ${errorData.error || 'Desconhecida'}`);
     }
 
     ocorrencias = await response.json();
-    console.log('Ocorrencias recebidas:', ocorrencias.length);
+    console.log('Ocorrencias recebidas:', ocorrencias.length, ocorrencias);
 
     ocorrenciasBody.innerHTML = '';
     ocorrencias.forEach(ocorrencia => {
-      const cliente = clientes.find(c => c.id === ocorrencia.cliente_id) || { codigo: '-', nome: '-' };
+      const cliente = clientesOcorrencias.find(c => c.id === ocorrencia.cliente_id) || { codigo: '-', nome: '-' };
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${ocorrencia.id || ''}</td>
@@ -132,6 +147,7 @@ async function renderizarOcorrencias() {
       `;
       ocorrenciasBody.appendChild(tr);
     });
+    console.log('Tabela de ocorrências renderizada com sucesso');
   } catch (error) {
     console.error('Erro ao carregar ocorrências:', error);
     showErrorToast('Erro ao carregar ocorrências: ' + error.message);
@@ -140,6 +156,7 @@ async function renderizarOcorrencias() {
 
 async function criarOcorrencia(event) {
   event.preventDefault();
+  console.log('Iniciando criação de ocorrência');
   const form = document.getElementById('criarOcorrenciaForm');
   const dataRegistro = document.getElementById('dataRegistro').value;
   const clienteId = document.getElementById('clienteId').value;
@@ -151,12 +168,14 @@ async function criarOcorrencia(event) {
   const feedbackCliente = document.getElementById('feedbackCliente').value.trim();
 
   if (!dataRegistro || !clienteId || !descricaoApontamento || !responsavelInterno || !acaoTomada || !acompanhamentoEricaOperacional) {
+    console.log('Campos obrigatórios ausentes:', { dataRegistro, clienteId, descricaoApontamento, responsavelInterno, acaoTomada, acompanhamentoEricaOperacional });
     showErrorToast('Por favor, preencha todos os campos obrigatórios.');
     return;
   }
 
   try {
     const token = localStorage.getItem('token');
+    console.log('Token para POST /api/ocorrencias-crm:', token ? 'Presente' : 'Ausente');
     const response = await fetch(`${apiBaseUrl}/api/ocorrencias-crm`, {
       method: 'POST',
       headers: {
@@ -175,8 +194,10 @@ async function criarOcorrencia(event) {
       })
     });
 
+    console.log('Resposta POST /api/ocorrencias-crm:', response.status, response.statusText);
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(`HTTP error! Status: ${response.status}, Mensagem: ${errorData.error || 'Desconhecida'}`);
     }
 
     showSuccessToast('Ocorrência criada com sucesso!');
@@ -185,6 +206,7 @@ async function criarOcorrencia(event) {
     form.reset();
     document.getElementById('dataRegistro').value = getDataAtual();
     await renderizarOcorrencias();
+    console.log('Ocorrência criada e tabela atualizada');
   } catch (error) {
     console.error('Erro ao criar ocorrência:', error);
     showErrorToast('Erro ao criar ocorrência: ' + error.message);
@@ -196,8 +218,10 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('API_BASE_URL:', apiBaseUrl);
   const token = localStorage.getItem('token');
   const permissao = localStorage.getItem('permissao');
+  console.log('Token:', token ? 'Presente' : 'Ausente', 'Permissao:', permissao);
 
   if (!token || !['Operador', 'Gerente'].includes(permissao)) {
+    console.log('Acesso negado:', { token: !!token, permissao });
     showErrorToast('Acesso negado. Faça login como Operador ou Gerente.');
     setTimeout(() => window.location.href = 'login.html', 1000);
     return;
@@ -208,8 +232,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (form && dataRegistroInput) {
     dataRegistroInput.value = getDataAtual();
     form.addEventListener('submit', criarOcorrencia);
+    console.log('Formulário inicializado');
   } else {
-    console.error('Formulário ou campo dataRegistro não encontrado');
+    console.error('Formulário ou campo dataRegistro não encontrado:', { form, dataRegistroInput });
   }
 
   popularClientes();
