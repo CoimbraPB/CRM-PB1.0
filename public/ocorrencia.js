@@ -6,11 +6,14 @@ const apiBaseUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https:/
 // Função para formatar data para dd/mm/aaaa
 function formatarData(data) {
   if (!data) return '';
-  const date = new Date(data);
-  const dia = String(date.getDate()).padStart(2, '0');
-  const mes = String(date.getMonth() + 1).padStart(2, '0');
-  const ano = date.getFullYear();
-  return `${dia}/${mes}/${ano}`;
+  // Extrai ano, mês e dia da string YYYY-MM-DD
+  const [ano, mes, dia] = data.split('-');
+  // Cria data local sem ajuste de fuso horário
+  const date = new Date(ano, mes - 1, dia);
+  const diaFormatado = String(date.getDate()).padStart(2, '0');
+  const mesFormatado = String(date.getMonth() + 1).padStart(2, '0');
+  const anoFormatado = date.getFullYear();
+  return `${diaFormatado}/${mesFormatado}/${anoFormatado}`;
 }
 
 // Função para obter data atual em formato YYYY-MM-DD
