@@ -20,8 +20,13 @@ function renderNavbar() {
   } else {
     linksHtml += `
       <a class="nav-link${currentPage === 'index.html' ? ' active' : ''}" href="index.html">Clientes</a>
-      <a class="nav-link${currentPage === 'ocorrencias-gestor.html' ? ' active' : ''}" href="ocorrencias-gestor.html">Ocorrências Gestor</a>
     `;
+
+    if (['Gerente', 'Gestor'].includes(permissao)) {
+      linksHtml += `
+        <a class="nav-link${currentPage === 'ocorrencias-gestor.html' ? ' active' : ''}" href="ocorrencias-gestor.html">Ocorrências Gestor</a>
+      `;
+    }
 
     if (['Operador', 'Gerente'].includes(permissao)) {
       linksHtml += `
