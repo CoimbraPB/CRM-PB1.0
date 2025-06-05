@@ -2,7 +2,7 @@ const express = require('express');
 const { Client } = require('pg');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs'); // Alterado para bcryptjs
+const bcrypt = require('bcryptjs');
 const path = require('path');
 
 const app = express();
@@ -81,7 +81,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Rota de Ocorrências (Gerente)
+// Rota de Ocorrências (Gestor)
 app.post('/api/ocorrencias', autenticar(['Gestor']), async (req, res) => {
   const {
     data_ocorrencia, setor, descricao, cliente_impactado, valor_desconto, tipo_desconto,
@@ -271,6 +271,54 @@ app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (
   } catch (error) {
     console.error('Erro ao criar cliente:', error);
     res.status(500).json({ error: 'Erro ao criar cliente' });
+  } finally {
+    await client.end();
+  }
+});
+
+// Nova Rota: Atualizar Cliente
+app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
+  const { id } = req.params;
+  const {
+    codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
+    estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo
+  } = req.body;
+
+  if (!codigo || !nome) {
+    console.log('PUT /api/clientes/:id: Campos obrigatórios ausentes', req.body);
+    return res.status(400).json({ error: 'Código e nome são obrigatórios' });
+  }
+
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+
+  try {
+    await client.connect();
+    const result = await client.query(
+      `UPDATE clientes SET
+        codigo = $1, nome = $2, razao_social = $3, cpf_cnpj = $4, regime_fiscal = $5,
+        situacao = $6, tipo_pessoa = $7, estado = $8, municipio = $9, status = $10,
+        possui_ie = $11, ie = $12, filial = $13, empresa_matriz = $14, grupo = $15
+      WHERE id = $16
+      RETURNING *`,
+      [
+        codigo, nome, razao_social || null, cpf_cnpj || null, regime_fiscal || null,
+        situacao || null, tipo_pessoa || null, estado || null, municipio || null,
+        status || null, possui_ie || false, ie || null, filial || null,
+        empresa_matriz || null, grupo || null, id
+      ]
+    );
+    if (result.rows.length === 0) {
+      console.log('PUT /api/clientes/:id: Cliente não encontrado', { id });
+      return res.status(404).json({ error: 'Cliente não encontrado' });
+    }
+    console.log('PUT /api/clientes/:id:', { id });
+    res.json({ success: true, message: 'Cliente atualizado com sucesso', data: result.rows[0] });
+  } catch (error) {
+    console.error('Erro ao atualizar cliente:', error);
+    res.status(500).json({ error: 'Erro ao atualizar cliente' });
   } finally {
     await client.end();
   }
