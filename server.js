@@ -2,7 +2,7 @@ const express = require('express');
 const { Client } = require('pg');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const path = require('path');
 
 const app = express();
