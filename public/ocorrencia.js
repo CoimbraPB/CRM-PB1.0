@@ -6,14 +6,14 @@ const apiBaseUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https:/
 // Função para formatar data para dd/mm/aaaa
 function formatarData(data) {
   if (!data) return '';
-  // Extrai ano, mês e dia da string YYYY-MM-DD
-  const [ano, mes, dia] = data.split('-');
-  // Cria data local sem ajuste de fuso horário
-  const date = new Date(ano, mes - 1, dia);
-  const diaFormatado = String(date.getDate()).padStart(2, '0');
-  const mesFormatado = String(date.getMonth() + 1).padStart(2, '0');
-  const anoFormatado = date.getFullYear();
-  return `${diaFormatado}/${mesFormatado}/${anoFormatado}`;
+  // Garante que apenas a parte da data (YYYY-MM-DD) seja usada
+  const dataStr = data.split('T')[0]; // Remove timestamp, se presente
+  const [ano, mes, dia] = dataStr.split('-');
+  if (!ano || !mes || !dia) {
+    console.error('Formato de data inválido:', data);
+    return '';
+  }
+  return `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
 }
 
 // Função para obter data atual em formato YYYY-MM-DD
@@ -208,6 +208,7 @@ async function criarOcorrencia(event) {
     modal.hide();
     form.reset();
     document.getElementById('dataRegistro').value = getDataAtual();
+    await popularClientes(); // Recarrega clientes para garantir sincronia
     await renderizarOcorrencias();
     console.log('Ocorrência criada e tabela atualizada');
   } catch (error) {
@@ -216,7 +217,7 @@ async function criarOcorrencia(event) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('Inicializando ocorrencia.js');
   console.log('API_BASE_URL:', apiBaseUrl);
   const token = localStorage.getItem('token');
@@ -240,6 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('Formulário ou campo dataRegistro não encontrado:', { form, dataRegistroInput });
   }
 
-  popularClientes();
-  renderizarOcorrencias();
+  await popularClientes(); // Carrega clientes primeiro
+  await renderizarOcorrencias(); // Renderiza ocorrências depois
 });
