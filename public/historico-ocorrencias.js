@@ -1,7 +1,17 @@
 let ocorrencias = [];
 
-// Usar API_BASE_URL de config.js ou fallback sem redeclarar
+// Usar API_BASE_URL de config.js ou fallback
 const apiBaseUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://crm-pb-web.onrender.com';
+
+// Função para formatar data para dd/mm/aaaa
+function formatarData(data) {
+  if (!data) return '';
+  const date = new Date(data);
+  const dia = String(date.getDate()).padStart(2, '0');
+  const mes = String(date.getMonth() + 1).padStart(2, '0');
+  const ano = date.getFullYear();
+  return `${dia}/${mes}/${ano}`;
+}
 
 function showSuccessToast(message) {
   const toast = document.getElementById('successToast');
@@ -24,7 +34,7 @@ function showErrorToast(message) {
     const bsToast = new bootstrap.Toast(toast);
     bsToast.show();
   } else {
-    console.error('Toast elements not found:', { toast, toastMessage });
+    console.error('Toast error elements not found:', { toast, toastMessage });
     alert(message);
   }
 }
@@ -83,28 +93,14 @@ async function renderizarOcorrencias() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${ocorrencia.id || ''}</td>
-        <td>${ocorrencia.data_ocorrencia || ''}</td>
+        <td>${formatarData(ocorrencia.data_ocorrencia)}</td>
         <td>${ocorrencia.setor || ''}</td>
-        <td>${ocorrencia.descricao || ''}</td>
         <td>${ocorrencia.cliente_impactado || ''}</td>
         <td>${ocorrencia.valor_desconto || ''}</td>
-        <td>${ocorrencia.tipo_desconto || ''}</td>
         <td>${ocorrencia.colaborador_nome || ''}</td>
-        <td>${ocorrencia.colaborador_cargo || ''}</td>
-        <td>${ocorrencia.advertido || ''}</td>
-        <td>${ocorrencia.tipo_advertencia || ''}</td>
-        <td>${ocorrencia.advertencia_outra || ''}</td>
-        <td>${ocorrencia.cliente_comunicado || ''}</td>
-        <td>${ocorrencia.meio_comunicacao || ''}</td>
-        <td>${ocorrencia.comunicacao_outro || ''}</td>
-        <td>${ocorrencia.acoes_imediatas || ''}</td>
-        <td>${ocorrencia.acoes_corretivas || ''}</td>
-        <td>${ocorrencia.acoes_preventivas || ''}</td>
-        <td>${ocorrencia.responsavel_nome || ''}</td>
-        <td>${ocorrencia.responsavel_data || ''}</td>
         <td>
           <button class="btn btn-primary btn-sm" onclick="mostrarDetalhes(${ocorrencia.id})">
-            <i class="bi bi-eye-fill"></i> Detalhes
+            <i class="bi bi-eye-fill"></i> Visualizar
           </button>
         </td>
       `;
@@ -126,7 +122,7 @@ function mostrarDetalhes(id) {
   const detalhesContent = document.getElementById('detalhesContent');
   detalhesContent.innerHTML = `
     <p><strong>ID:</strong> ${ocorrencia.id || '-'}</p>
-    <p><strong>Data da Ocorrência:</strong> ${ocorrencia.data_ocorrencia || '-'}</p>
+    <p><strong>Data da Ocorrência:</strong> ${formatarData(ocorrencia.data_ocorrencia)}</p>
     <p><strong>Setor:</strong> ${ocorrencia.setor || '-'}</p>
     <p><strong>Descrição:</strong> ${ocorrencia.descricao || '-'}</p>
     <p><strong>Cliente Impactado:</strong> ${ocorrencia.cliente_impactado || '-'}</p>
@@ -144,7 +140,7 @@ function mostrarDetalhes(id) {
     <p><strong>Ações Corretivas:</strong> ${ocorrencia.acoes_corretivas || '-'}</p>
     <p><strong>Ações Preventivas:</strong> ${ocorrencia.acoes_preventivas || '-'}</p>
     <p><strong>Responsável Nome:</strong> ${ocorrencia.responsavel_nome || '-'}</p>
-    <p><strong>Responsável Data:</strong> ${ocorrencia.responsavel_data || '-'}</p>
+    <p><strong>Responsável Data:</strong> ${formatarData(ocorrencia.responsavel_data)}</p>
   `;
 
   const modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
@@ -168,7 +164,7 @@ function exportarPDF() {
     ],
     body: ocorrencias.map(ocorrencia => [
       ocorrencia.id || '',
-      ocorrencia.data_ocorrencia || '',
+      formatarData(ocorrencia.data_ocorrencia) || '',
       ocorrencia.setor || '',
       ocorrencia.descricao || '',
       ocorrencia.cliente_impactado || '',
@@ -186,23 +182,12 @@ function exportarPDF() {
       ocorrencia.acoes_corretivas || '',
       ocorrencia.acoes_preventivas || '',
       ocorrencia.responsavel_nome || '',
-      ocorrencia.responsavel_data || ''
+      formatarData(ocorrencia.responsavel_data) || ''
     ]),
     styles: { fontSize: 8 },
     columnStyles: { 3: { cellWidth: 30 } } // Ajuste para descrição longa
   });
   doc.save('historico_ocorrencias.pdf');
-}
-
-function exportarJSON() {
-  const dataStr = JSON.stringify(ocorrencias, null, 1);
-  const blob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'historico_ocorrencias.json';
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 function filtrarOcorrencias() {
