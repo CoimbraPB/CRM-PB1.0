@@ -1,7 +1,7 @@
 let ocorrencias = [];
 
-// Fallback para API_BASE_URL
-const API_BASE_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://crm-pb-web.onrender.com';
+// Usar API_BASE_URL de config.js ou fallback sem redeclarar
+const apiBaseUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://crm-pb-web.onrender.com';
 
 function showSuccessToast(message) {
   const toast = document.getElementById('successToast');
@@ -46,9 +46,9 @@ async function renderizarOcorrencias() {
       throw new Error('Token de autenticação ausente. Faça login novamente.');
     }
 
-    console.log('API_BASE_URL:', API_BASE_URL);
-    console.log('Enviando requisição para:', `${API_BASE_URL}/api/ocorrencias`);
-    const response = await fetch(`${API_BASE_URL}/api/ocorrencias`, {
+    console.log('API_BASE_URL:', apiBaseUrl);
+    console.log('Enviando requisição para:', `${apiBaseUrl}/api/ocorrencias`);
+    const response = await fetch(`${apiBaseUrl}/api/ocorrencias`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -195,7 +195,7 @@ function exportarPDF() {
 }
 
 function exportarJSON() {
-  const dataStr = JSON.stringify(ocorrencias, null, 2);
+  const dataStr = JSON.stringify(ocorrencias, null, 1);
   const blob = new Blob([dataStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -212,6 +212,7 @@ function filtrarOcorrencias() {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Inicializando historico-ocorrencias.js');
   console.log('API_BASE_URL disponível:', typeof API_BASE_URL !== 'undefined');
+  console.log('API_BASE_URL:', apiBaseUrl);
   const token = localStorage.getItem('token');
   const permissao = localStorage.getItem('permissao');
 
