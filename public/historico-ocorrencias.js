@@ -39,12 +39,24 @@ function showErrorToast(message) {
   }
 }
 
+function popularFiltroSetor(setores) {
+  const filtroSetor = document.getElementById('filtroSetor');
+  if (!filtroSetor) return;
+  setores.sort().forEach(setor => {
+    const option = document.createElement('option');
+    option.value = setor;
+    option.textContent = setor;
+    filtroSetor.appendChild(option);
+  });
+}
+
 async function renderizarOcorrencias() {
   console.log('Rendering ocorrencias');
   const ocorrenciasBody = document.getElementById('ocorrenciasBody');
   const filtroInput = document.getElementById('filtroInput');
-  if (!ocorrenciasBody || !filtroInput) {
-    console.error('Elementos DOM não encontrados:', { ocorrenciasBody, filtroInput });
+  const filtroSetor = document.getElementById('filtroSetor');
+  if (!ocorrenciasBody || !filtroInput || !filtroSetor) {
+    console.error('Elementos DOM não encontrados:', { ocorrenciasBody, filtroInput, filtroSetor });
     showErrorToast('Erro: Interface não carregada corretamente.');
     return;
   }
@@ -81,12 +93,22 @@ async function renderizarOcorrencias() {
     ocorrencias = await response.json();
     console.log('Ocorrencias recebidas:', ocorrencias.length);
 
-    const filtro = filtroInput.value.toLowerCase();
-    const ocorrenciasFiltradas = ocorrencias.filter(ocorrencia =>
-      (ocorrencia.setor || '').toLowerCase().includes(filtro) ||
-      (ocorrencia.cliente_impactado || '').toLowerCase().includes(filtro) ||
-      (ocorrencia.descricao || '').toLowerCase().includes(filtro)
-    );
+    // Popular dropdown com setores únicos
+    const setores = [...new Set(ocorrencias.map(o => o.setor).filter(s => s))];
+    filtroSetor.innerHTML = '<option value="">Todos</option>';
+    popularFiltroSetor(setores);
+
+    const filtroTexto = filtroInput.value.toLowerCase();
+    const filtroSetorSelecionado = filtroSetor.value;
+
+    const ocorrenciasFiltradas = ocorrencias.filter(ocorrencia => {
+      const matchesSetor = !filtroSetorSelecionado || ocorrencia.setor === filtroSetorSelecionado;
+      const matchesTexto =
+        (ocorrencia.setor || '').toLowerCase().includes(filtroTexto) ||
+        (ocorrencia.cliente_impactado || '').toLowerCase().includes(filtroTexto) ||
+        (ocorrencia.descricao || '').toLowerCase().includes(filtroTexto);
+      return matchesSetor && matchesTexto;
+    });
 
     ocorrenciasBody.innerHTML = '';
     ocorrenciasFiltradas.forEach(ocorrencia => {
@@ -148,9 +170,23 @@ function mostrarDetalhes(id) {
 }
 
 function exportarPDF() {
+  const filtroSetor = document.getElementById('filtroSetor');
+  const filtroInput = document.getElementById('filtroInput');
+  const filtroSetorSelecionado = filtroSetor ? filtroSetor.value : '';
+  const filtroTexto = filtroInput ? filtroInput.value.toLowerCase() : '';
+
+  const ocorrenciasFiltradas = ocorrencias.filter(ocorrencia => {
+    const matchesSetor = !filtroSetorSelecionado || ocorrencia.setor === filtroSetorSelecionado;
+    const matchesTexto =
+      (ocorrencia.setor || '').toLowerCase().includes(filtroTexto) ||
+      (ocorrencia.cliente_impactado || '').toLowerCase().includes(filtroTexto) ||
+      (ocorrencia.descricao || '').toLowerCase().includes(filtroTexto);
+    return matchesSetor && matchesTexto;
+  });
+
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'landscape' });
-  doc.text('Histórico de Ocorrências', 14, 10);
+  doc.text('Histórico de Ocorrências' + (filtroSetorSelecionado ? ` - ${filtroSetorSelecionado}` : ''), 14, 10);
   doc.autoTable({
     head: [
       [
@@ -162,7 +198,7 @@ function exportarPDF() {
         'Responsável Data'
       ]
     ],
-    body: ocorrencias.map(ocorrencia => [
+    body: ocorrenciasFiltradas.map(ocorrencia => [
       ocorrencia.id || '',
       formatarData(ocorrencia.data_ocorrencia) || '',
       ocorrencia.setor || '',
@@ -187,7 +223,7 @@ function exportarPDF() {
     styles: { fontSize: 8 },
     columnStyles: { 3: { cellWidth: 30 } } // Ajuste para descrição longa
   });
-  doc.save('historico_ocorrencias.pdf');
+  doc.save(`historico_ocorrencias${filtroSetorSelecionado ? `_${filtroSetorSelecionado}` : ''}.pdf`);
 }
 
 function filtrarOcorrencias() {
@@ -208,12 +244,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const filtroInput = document.getElementById('filtroInput');
-  if (!filtroInput) {
-    console.error('Filtro input não encontrado');
+  const filtroSetor = document.getElementById('filtroSetor');
+  if (!filtroInput || !filtroSetor) {
+    console.error('Filtros não encontrados:', { filtroInput, filtroSetor });
     showErrorToast('Erro: Interface não carregada corretamente.');
     return;
   }
 
   filtroInput.addEventListener('input', filtrarOcorrencias);
+  filtroSetor.addEventListener('change', filtrarOcorrencias);
   renderizarOcorrencias();
 });
