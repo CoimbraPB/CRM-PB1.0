@@ -2,7 +2,7 @@ const express = require('express');
 const { Client } = require('pg');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs'); // Alterado para bcryptjs
 const path = require('path');
 
 const app = express();
@@ -229,6 +229,48 @@ app.get('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (r
   } catch (error) {
     console.error('Erro ao buscar clientes:', error);
     res.status(500).json({ error: 'Erro ao buscar clientes' });
+  } finally {
+    await client.end();
+  }
+});
+
+// Nova Rota: Criar Cliente
+app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
+  const {
+    codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
+    estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo
+  } = req.body;
+
+  if (!codigo || !nome) {
+    console.log('POST /api/clientes: Campos obrigatórios ausentes', req.body);
+    return res.status(400).json({ error: 'Código e nome são obrigatórios' });
+  }
+
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+
+  try {
+    await client.connect();
+    const result = await client.query(
+      `INSERT INTO clientes (
+        codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
+        estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      RETURNING *`,
+      [
+        codigo, nome, razao_social || null, cpf_cnpj || null, regime_fiscal || null,
+        situacao || null, tipo_pessoa || null, estado || null, municipio || null,
+        status || null, possui_ie || false, ie || null, filial || null,
+        empresa_matriz || null, grupo || null
+      ]
+    );
+    console.log('POST /api/clientes:', { id: result.rows[0].id });
+    res.status(201).json({ success: true, message: 'Cliente criado com sucesso', data: result.rows[0] });
+  } catch (error) {
+    console.error('Erro ao criar cliente:', error);
+    res.status(500).json({ error: 'Erro ao criar cliente' });
   } finally {
     await client.end();
   }
