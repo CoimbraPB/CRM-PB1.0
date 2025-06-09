@@ -234,7 +234,8 @@ app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (
     return res.status(400).json({ error: 'Código e nome são obrigatórios' });
   }
 
-  const tipoServicoJson = tipo_servico && Array.isArray(tipo_servico) ? tipo_servico : [];
+  // Serializar tipo_servico como string JSON
+  const tipoServicoJson = tipo_servico && Array.isArray(tipo_servico) ? JSON.stringify(tipo_servico) : '[]';
 
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -248,7 +249,7 @@ app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (
         codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
         estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo,
         segmento, data_entrada, data_saida, sistema, tipo_servico
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20::jsonb)
       RETURNING *`,
       [
         codigo, nome, razao_social || null, cpf_cnpj || null, regime_fiscal || null,
@@ -261,7 +262,7 @@ app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (
     console.log('POST /api/clientes:', { id: result.rows[0].id });
     res.status(201).json({ success: true, message: 'Cliente criado com sucesso', data: result.rows[0] });
   } catch (error) {
-    console.error('Erro ao criar cliente:', error);
+    console.error('Erro ao criar cliente:', error, { body: req.body });
     res.status(500).json({ error: 'Erro ao criar cliente', details: error.message });
   } finally {
     await client.end();
@@ -282,8 +283,8 @@ app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), asyn
     return res.status(400).json({ error: 'Código e nome são obrigatórios' });
   }
 
-  // Tratar tipo_servico para garantir que seja um array válido
-  const tipoServicoJson = tipo_servico && Array.isArray(tipo_servico) ? tipo_servico : [];
+  // Serializar tipo_servico como string JSON
+  const tipoServicoJson = tipo_servico && Array.isArray(tipo_servico) ? JSON.stringify(tipo_servico) : '[]';
 
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -297,7 +298,7 @@ app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), asyn
         codigo = $1, nome = $2, razao_social = $3, cpf_cnpj = $4, regime_fiscal = $5,
         situacao = $6, tipo_pessoa = $7, estado = $8, municipio = $9, status = $10,
         possui_ie = $11, ie = $12, filial = $13, empresa_matriz = $14, grupo = $15,
-        segmento = $16, data_entrada = $17, data_saida = $18, sistema = $19, tipo_servico = $20
+        segmento = $16, data_entrada = $17, data_saida = $18, sistema = $19, tipo_servico = $20::jsonb
       WHERE id = $21
       RETURNING *`,
       [
@@ -334,13 +335,13 @@ app.post('/api/clientes/import', autenticar(['Operador', 'Gerente', 'Gestor']), 
     await client.connect();
     await client.query('BEGIN');
     for (const cliente of clientes) {
-      const tipoServicoJson = cliente.tipo_servico && Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico : [];
+      const tipoServicoJson = cliente.tipo_servico && Array.isArray(cliente.tipo_servico) ? JSON.stringify(cliente.tipo_servico) : '[]';
       await client.query(
         `INSERT INTO clientes (
           codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
           estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo,
           segmento, data_entrada, data_saida, sistema, tipo_servico
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20::jsonb)
         ON CONFLICT (codigo) DO UPDATE SET
           nome = EXCLUDED.nome,
           razao_social = EXCLUDED.razao_social,
