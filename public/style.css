@@ -101,7 +101,7 @@ body {
 
 .autocomplete-suggestions {
   position: absolute;
-  z-index: 1050; /* Acima do modal */
+  z-index: 1060; /* Acima do modal */
   width: 100%; /* Herda a largura do campo de texto */
   max-width: 100%; /* Limita ao tamanho do container pai */
   max-height: 150px; /* Reduzido para caber melhor no modal */
@@ -130,3 +130,4 @@ body {
 .autocomplete-suggestions .list-group-item:focus {
   background-color: #f8f9fa;
 }
+
