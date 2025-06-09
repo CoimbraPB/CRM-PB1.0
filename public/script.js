@@ -123,8 +123,8 @@ async function renderizarClientes() {
       <td>${cliente.empresa_matriz || ''}</td>
       <td>${cliente.grupo || ''}</td>
       <td>${cliente.segmento || ''}</td>
-      <td>${cliente.data_entrada ? cliente.data_entrada.split('-').reverse().join('/') : ''}</td>
-      <td>${cliente.data_saida ? cliente.data_saida.split('-').reverse().join('/') : ''}</td>
+<td>${cliente.data_entrada ? cliente.data_entrada.substring(0, 10).split('-').reverse().join('/') : ''}</td>
+<td>${cliente.data_saida ? cliente.data_saida.substring(0, 10).split('-').reverse().join('/') : ''}</td>
       <td>${cliente.sistema || ''}</td>
       <td>${Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ') : ''}</td>
       <td>
