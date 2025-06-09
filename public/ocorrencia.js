@@ -140,6 +140,7 @@ async function renderizarOcorrencias() {
       tr.addEventListener('click', () => editarOcorrencia(ocorrencia.id));
       tr.innerHTML = `
         <td>${ocorrencia.id || ''}</td>
+        <td>${ocorrencia.titulo_descricao || ''}</td>
         <td>${formatarData(ocorrencia.data_registro)}</td>
         <td>${cliente.codigo} - ${cliente.nome}</td>
         <td>${ocorrencia.descricao_apontamento || ''}</td>
@@ -151,7 +152,7 @@ async function renderizarOcorrencias() {
       `;
       ocorrenciasBody.appendChild(tr);
     });
-    console.log('T eos de ocorrências renderizada com sucesso');
+    console.log('Tabela de ocorrências renderizada com sucesso');
   } catch (error) {
     console.error('Erro ao carregar ocorrências:', error);
     showErrorToast('Erro ao carregar ocorrências: ' + error.message);
@@ -179,6 +180,7 @@ function editarOcorrencia(id) {
   document.getElementById('ocorrenciaId').value = id;
   document.getElementById('dataRegistro').value = ocorrencia.data_registro ? ocorrencia.data_registro.split('T')[0] : '';
   document.getElementById('clienteId').value = ocorrencia.cliente_id || '';
+  document.getElementById('tituloDescricao').value = ocorrencia.titulo_descricao || '';
   document.getElementById('descricaoApontamento').value = ocorrencia.descricao_apontamento || '';
   document.getElementById('responsavelInterno').value = ocorrencia.responsavel_interno || '';
   document.getElementById('acaoTomada').value = ocorrencia.acao_tomada || '';
@@ -194,6 +196,7 @@ async function salvarOcorrencia(event) {
   const id = document.getElementById('ocorrenciaId').value;
   const dataRegistro = document.getElementById('dataRegistro').value;
   const clienteId = document.getElementById('clienteId').value;
+  const tituloDescricao = document.getElementById('tituloDescricao').value.trim();
   const descricaoApontamento = document.getElementById('descricaoApontamento').value.trim();
   const responsavelInterno = document.getElementById('responsavelInterno').value.trim();
   const acaoTomada = document.getElementById('acaoTomada').value.trim();
@@ -201,8 +204,8 @@ async function salvarOcorrencia(event) {
   const dataResolucao = document.getElementById('dataResolucao').value;
   const feedbackCliente = document.getElementById('feedbackCliente').value.trim();
 
-  if (!dataRegistro || !clienteId || !descricaoApontamento || !responsavelInterno || !acaoTomada || !acompanhamentoEricaOperacional) {
-    console.log('Campos obrigatórios ausentes:', { dataRegistro, clienteId, descricaoApontamento, responsavelInterno, acaoTomada, acompanhamentoEricaOperacional });
+  if (!dataRegistro || !clienteId || !tituloDescricao || !descricaoApontamento || !responsavelInterno || !acaoTomada || !acompanhamentoEricaOperacional) {
+    console.log('Campos obrigatórios ausentes:', { dataRegistro, clienteId, tituloDescricao, descricaoApontamento, responsavelInterno, acaoTomada, acompanhamentoEricaOperacional });
     showErrorToast('Por favor, preencha todos os campos obrigatórios.');
     return;
   }
@@ -210,6 +213,7 @@ async function salvarOcorrencia(event) {
   const ocorrenciaData = {
     data_registro: dataRegistro,
     cliente_id: parseInt(clienteId),
+    titulo_descricao: tituloDescricao,
     descricao_apontamento: descricaoApontamento,
     responsavel_interno: responsavelInterno,
     acao_tomada: acaoTomada,

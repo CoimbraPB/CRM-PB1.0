@@ -27,14 +27,15 @@
         <thead>
           <tr>
             <th>ID</th>
+            <th>Título da Descrição</th>
             <th>Data de Registro</th>
             <th>Cliente</th>
-            <th>Descrição do Apontamento</th>
-            <th>Responsável Interno</th>
-            <th>Ação Tomada</th>
-            <th>Acompanhamento Erica x Operacional</th>
+            <!--<th>Descrição do Apontamento</th>-->
+            <!--<th>Responsável Interno</th>-->
+           <!--<th>Ação Tomada</th>-->
+            <!--<th>Acompanhamento Erica x Operacional</th>-->
             <th>Data de Resolução</th>
-            <th>Feedback do Cliente</th>
+            <!--<th>Feedback do Cliente</th>-->
           </tr>
         </thead>
         <tbody id="ocorrenciasBody"></tbody>
@@ -62,6 +63,10 @@
                 <select class="form-select" id="clienteId" required>
                   <option value="">Selecione um cliente</option>
                 </select>
+              </div>
+              <div class="col-md-12 mb-3">
+                <label for="tituloDescricao" class="form-label">Título da Descrição *</label>
+                <input type="text" class="form-control" id="tituloDescricao" required>
               </div>
               <div class="col-md-12 mb-3">
                 <label for="descricaoApontamento" class="form-label">Descrição do Apontamento *</label>

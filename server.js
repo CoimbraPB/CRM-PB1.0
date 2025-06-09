@@ -164,11 +164,11 @@ app.get('/api/ocorrencias-crm', autenticar(['Operador', 'Gerente']), async (req,
 
 app.post('/api/ocorrencias-crm', autenticar(['Operador', 'Gerente']), async (req, res) => {
   const {
-    data_registro, cliente_id, descricao_apontamento, responsavel_interno,
+    data_registro, cliente_id, titulo_descricao, descricao_apontamento, responsavel_interno,
     acao_tomada, acompanhamento_erica_operacional, data_resolucao, feedback_cliente
   } = req.body;
 
-  if (!data_registro || !cliente_id || !descricao_apontamento || !responsavel_interno || !acao_tomada || !acompanhamento_erica_operacional) {
+  if (!data_registro || !cliente_id || !titulo_descricao || !descricao_apontamento || !responsavel_interno || !acao_tomada || !acompanhamento_erica_operacional) {
     console.log('POST /api/ocorrencias-crm: Campos obrigatórios ausentes', req.body);
     return res.status(400).json({ error: 'Campos obrigatórios ausentes' });
   }
@@ -182,12 +182,12 @@ app.post('/api/ocorrencias-crm', autenticar(['Operador', 'Gerente']), async (req
     await client.connect();
     const result = await client.query(`
       INSERT INTO ocorrencias_crm (
-        data_registro, cliente_id, descricao_apontamento, responsavel_interno,
+        data_registro, cliente_id, titulo_descricao, descricao_apontamento, responsavel_interno,
         acao_tomada, acompanhamento_erica_operacional, data_resolucao, feedback_cliente
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `, [
-      data_registro, cliente_id, descricao_apontamento, responsavel_interno,
+      data_registro, cliente_id, titulo_descricao, descricao_apontamento, responsavel_interno,
       acao_tomada, acompanhamento_erica_operacional, data_resolucao || null, feedback_cliente || null
     ]);
     console.log('POST /api/ocorrencias-crm:', { id: result.rows[0].id });
@@ -203,11 +203,11 @@ app.post('/api/ocorrencias-crm', autenticar(['Operador', 'Gerente']), async (req
 app.put('/api/ocorrencias-crm/:id', autenticar(['Operador', 'Gerente']), async (req, res) => {
   const { id } = req.params;
   const {
-    data_registro, cliente_id, descricao_apontamento, responsavel_interno,
+    data_registro, cliente_id, titulo_descricao, descricao_apontamento, responsavel_interno,
     acao_tomada, acompanhamento_erica_operacional, data_resolucao, feedback_cliente
   } = req.body;
 
-  if (!data_registro || !cliente_id || !descricao_apontamento || !responsavel_interno || !acao_tomada || !acompanhamento_erica_operacional) {
+  if (!data_registro || !cliente_id || !titulo_descricao || !descricao_apontamento || !responsavel_interno || !acao_tomada || !acompanhamento_erica_operacional) {
     console.log('PUT /api/ocorrencias-crm/:id: Campos obrigatórios ausentes', req.body);
     return res.status(400).json({ error: 'Campos obrigatórios ausentes' });
   }
@@ -223,16 +223,17 @@ app.put('/api/ocorrencias-crm/:id', autenticar(['Operador', 'Gerente']), async (
       UPDATE ocorrencias_crm SET
         data_registro = $1,
         cliente_id = $2,
-        descricao_apontamento = $3,
-        responsavel_interno = $4,
-        acao_tomada = $5,
-        acompanhamento_erica_operacional = $6,
-        data_resolucao = $7,
-        feedback_cliente = $8
-      WHERE id = $9
+        titulo_descricao = $3,
+        descricao_apontamento = $4,
+        responsavel_interno = $5,
+        acao_tomada = $6,
+        acompanhamento_erica_operacional = $7,
+        data_resolucao = $8,
+        feedback_cliente = $9
+      WHERE id = $10
       RETURNING *
     `, [
-      data_registro, cliente_id, descricao_apontamento, responsavel_interno,
+      data_registro, cliente_id, titulo_descricao, descricao_apontamento, responsavel_interno,
       acao_tomada, acompanhamento_erica_operacional, data_resolucao || null, feedback_cliente || null, id
     ]);
 
