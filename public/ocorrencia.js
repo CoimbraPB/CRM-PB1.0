@@ -50,6 +50,16 @@ function showErrorToast(message) {
   }
 }
 
+// Função para remover o .modal-backdrop manualmente
+function removerModalBackdrop() {
+  const backdrop = document.querySelector('.modal-backdrop');
+  if (backdrop) {
+    backdrop.remove();
+  }
+  document.body.classList.remove('modal-open');
+  document.body.style.removeProperty('padding-right');
+}
+
 async function popularClientes() {
   console.log('Iniciando popularClientes');
   try {
@@ -155,7 +165,8 @@ async function renderizarOcorrencias() {
 }
 
 function abrirModalCriarOcorrencia() {
-  const modal = new bootstrap.Modal(document.getElementById('ocorrenciaModal'));
+  const modalElement = document.getElementById('ocorrenciaModal');
+  const modal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
   document.getElementById('ocorrenciaModalLabel').textContent = 'Criar Ocorrência';
   document.getElementById('ocorrenciaForm').reset();
   document.getElementById('ocorrenciaId').value = '';
@@ -170,7 +181,8 @@ function editarOcorrencia(id) {
     return;
   }
 
-  const modal = new bootstrap.Modal(document.getElementById('ocorrenciaModal'));
+  const modalElement = document.getElementById('ocorrenciaModal');
+  const modal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
   document.getElementById('ocorrenciaModalLabel').textContent = 'Editar Ocorrência';
   document.getElementById('ocorrenciaId').value = id;
   document.getElementById('dataRegistro').value = ocorrencia.data_registro ? ocorrencia.data_registro.split('T')[0] : '';
@@ -188,6 +200,8 @@ function editarOcorrencia(id) {
 async function salvarOcorrencia(event) {
   event.preventDefault();
   console.log('Iniciando salvarOcorrencia');
+  const modalElement = document.getElementById('ocorrenciaModal');
+  const modal = bootstrap.Modal.getInstance(modalElement);
   const id = document.getElementById('ocorrenciaId').value;
   const dataRegistro = document.getElementById('dataRegistro').value;
   const clienteId = document.getElementById('clienteId').value;
@@ -239,8 +253,8 @@ async function salvarOcorrencia(event) {
     }
 
     showSuccessToast(id ? 'Ocorrência atualizada com sucesso!' : 'Ocorrência criada com sucesso!');
-    const modal = bootstrap.Modal.getInstance(document.getElementById('ocorrenciaModal'));
     modal.hide();
+    removerModalBackdrop(); // Garante a remoção do backdrop
     document.getElementById('ocorrenciaForm').reset();
     document.getElementById('dataRegistro').value = getDataAtual();
     await renderizarOcorrencias();
@@ -268,13 +282,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   const form = document.getElementById('ocorrenciaForm');
   const dataRegistroInput = document.getElementById('dataRegistro');
   const criarOcorrenciaBtn = document.querySelector('button[data-bs-target="#ocorrenciaModal"]');
-  if (form && dataRegistroInput && criarOcorrenciaBtn) {
+  const cancelarBtn = document.getElementById('cancelarOcorrencia');
+
+  if (form && dataRegistroInput && criarOcorrenciaBtn && cancelarBtn) {
     dataRegistroInput.value = getDataAtual();
     form.addEventListener('submit', salvarOcorrencia);
     criarOcorrenciaBtn.addEventListener('click', abrirModalCriarOcorrencia);
-    console.log('Formulário e botão inicializados');
+
+    // Evento para o botão Cancelar
+    cancelarBtn.addEventListener('click', () => {
+      const modalElement = document.getElementById('ocorrenciaModal');
+      const modal = bootstrap.Modal.getInstance(modalElement);
+      modal.hide();
+      removerModalBackdrop(); // Garante a remoção do backdrop
+      form.reset();
+      document.getElementById('dataRegistro').value = getDataAtual();
+    });
+
+    // Evento para quando o modal é completamente fechado
+    const modalElement = document.getElementById('ocorrenciaModal');
+    modalElement.addEventListener('hidden.bs.modal', () => {
+      removerModalBackdrop(); // Garante a remoção do backdrop
+      form.reset();
+      document.getElementById('dataRegistro').value = getDataAtual();
+    });
+
+    console.log('Formulário e botões inicializados');
   } else {
-    console.error('Elementos não encontrados:', { form, dataRegistroInput, criarOcorrenciaBtn });
+    console.error('Elementos não encontrados:', { form, dataRegistroInput, criarOcorrenciaBtn, cancelarBtn });
   }
 
   await popularClientes();
