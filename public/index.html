@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cadastro de Clientes - CRM Profissional</title>
+  <title>CRM PB</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -12,7 +12,7 @@
 <body>
   <nav class="navbar navbar-light bg-light shadow-sm">
     <div class="container max-w-7xl d-flex align-items-center">
-      <a class="navbar-brand font-bold text-gray-900" href="index.html">CRM Profissional</a>
+      <a class="navbar-brand font-bold text-gray-900" href="index.html">CRM PB</a>
       <div class="ms-auto d-flex gap-3" id="navbarLinks"></div>
     </div>
   </nav>
@@ -250,63 +250,63 @@
                   <option value="Outros">Outros</option>
                 </select>
               </div>
-              <div class="col-md-12 mb-3">
-                <label class="form-label">Tipo de Serviço</label>
-                <div id="tipo_servico">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="Escrita Fiscal" id="tipo_servico_escrita_fiscal">
-                    <label class="form-check-label" for="tipo_servico_escrita_fiscal">Escrita Fiscal</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="Contábil" id="tipo_servico_contabil">
-                    <label class="form-check-label" for="tipo_servico_contabil">Contábil</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="Departamento Pessoal" id="tipo_servico_dp">
-                    <label class="form-check-label" for="tipo_servico_dp">Departamento Pessoal (DP)</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="Departamento Pessoal Parcial" id="tipo_servico_dp_parcial">
-                    <label class="form-check-label" for="tipo_servico_dp_parcial">Departamento Pessoal Parcial</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="Societário" id="tipo_servico_societario">
-                    <label class="form-check-label" for="tipo_servico_societario">Societário</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="BPO Financeiro" id="tipo_servico_bpo">
-                    <label class="form-check-label" for="tipo_servico_bpo">BPO Financeiro</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="Consultoria Tributária" id="tipo_servico_consultoria_tributaria">
-                    <label class="form-check-label" for="tipo_servico_consultoria_tributaria">Consultoria Tributária</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="Consultoria Jurídica" id="tipo_servico_consultoria_juridica">
-                    <label class="form-check-label" for="tipo_servico_consultoria_juridica">Consultoria Jurídica</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="Consultoria Reforma Tributária" id="tipo_servico_consultoria_reforma">
-                    <label class="form-check-label" for="tipo_servico_consultoria_reforma">Consultoria Reforma Tributária</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="Treinamento Fiscal e Financeiro" id="tipo_servico_treinamento_fiscal_financeiro">
-                    <label class="form-check-label" for="tipo_servico_treinamento_fiscal_financeiro">Treinamento Fiscal e Financeiro</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="Treinamento Fiscal" id="tipo_servico_treinamento_fiscal">
-                    <label class="form-check-label" for="tipo_servico_treinamento_fiscal">Treinamento Fiscal</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="Treinamento Financeiro" id="tipo_servico_treinamento_financeiro">
-                    <label class="form-check-label" for="tipo_servico_treinamento_financeiro">Treinamento Financeiro</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="Serviço Extra" id="tipo_servico_extra">
-                    <label class="form-check-label" for="tipo_servico_extra">Serviço Extra</label>
+                <div class="mb-3">
+                  <label for="tipo_servico" class="form-label">Tipo de Serviço</label>
+                  <div id="tipo_servico">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="Escrita Fiscal,Contábil,Departamento Pessoal" id="tipo_servico_combinado">
+                      <label class="form-check-label" for="tipo_servico_combinado">Escrita Fiscal, Contábil, DP</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="Escrita Fiscal" id="tipo_servico_escrita_fiscal">
+                      <label class="form-check-label" for="tipo_servico_escrita_fiscal">Escrita Fiscal</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="Departamento Pessoal" id="tipo_servico_dp">
+                      <label class="form-check-label" for="tipo_servico_dp">Departamento Pessoal</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="Departamento Pessoal Parcial" id="tipo_servico_dp_parcial">
+                      <label class="form-check-label" for="tipo_servico_dp_parcial">Departamento Pessoal Parcial</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="Societário" id="tipo_servico_societario">
+                      <label class="form-check-label" for="tipo_servico_societario">Societário</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="BPO Financeiro" id="tipo_servico_bpo_financeiro">
+                      <label class="form-check-label" for="tipo_servico_bpo_financeiro">BPO Financeiro</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="Consultoria Tributária" id="tipo_servico_consultoria_tributaria">
+                      <label class="form-check-label" for="tipo_servico_consultoria_tributaria">Consultoria Tributária</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="Consultoria Jurídica" id="tipo_servico_consultoria_juridica">
+                      <label class="form-check-label" for="tipo_servico_consultoria_juridica">Consultoria Jurídica</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="Consultoria Reforma Tributária" id="tipo_servico_consultoria_reforma_tributaria">
+                      <label class="form-check-label" for="tipo_servico_consultoria_reforma_tributaria">Consultoria Reforma Tributária</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="Treinamento Fiscal e Financeiro" id="tipo_servico_treinamento_fiscal_financeiro">
+                      <label class="form-check-label" for="tipo_servico_treinamento_fiscal_financeiro">Treinamento Fiscal e Financeiro</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="Treinamento Fiscal" id="tipo_servico_treinamento_fiscal">
+                      <label class="form-check-label" for="tipo_servico_treinamento_fiscal">Treinamento Fiscal</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="Treinamento Financeiro" id="tipo_servico_treinamento_financeiro">
+                      <label class="form-check-label" for="tipo_servico_treinamento_financeiro">Treinamento Financeiro</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="Serviço Extra" id="tipo_servico_servico_extra">
+                      <label class="form-check-label" for="tipo_servico_servico_extra">Serviço Extra</label>
+                    </div>
                   </div>
                 </div>
-              </div>
             </div>
           </div>
           <div class="modal-footer">

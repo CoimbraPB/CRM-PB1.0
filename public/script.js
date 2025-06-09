@@ -93,7 +93,7 @@ async function renderizarClientes() {
       (cliente.grupo || '').toLowerCase().includes(filtro) ||
       (cliente.segmento || '').toLowerCase().includes(filtro) ||
       (cliente.sistema || '').toLowerCase().includes(filtro) ||
-      (Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ') : '').toLowerCase().includes(filtro)
+      (Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ').toLowerCase().includes(filtro) : '')
     );
 
     const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
@@ -242,10 +242,28 @@ function editarCliente(id) {
   document.getElementById('data_entrada').value = cliente.data_entrada || '';
   document.getElementById('data_saida').value = cliente.data_saida || '';
   document.getElementById('sistema').value = cliente.sistema || '';
+
   // Configurar checkboxes de tipo_servico
   document.querySelectorAll('#tipo_servico input[type="checkbox"]').forEach(checkbox => {
-    checkbox.checked = Array.isArray(cliente.tipo_servico) && cliente.tipo_servico.includes(checkbox.value);
+    checkbox.checked = false;
   });
+
+  const tipoServico = Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico : [];
+  // Verificar se contém Escrita Fiscal, Contábil e Departamento Pessoal
+  const hasCombinado = tipoServico.includes('Escrita Fiscal') && 
+                      tipoServico.includes('Contábil') && 
+                      tipoServico.includes('Departamento Pessoal');
+  if (hasCombinado) {
+    document.getElementById('tipo_servico_combinado').checked = true;
+  }
+  // Marcar outros checkboxes individualmente
+  tipoServico.forEach(servico => {
+    const checkbox = document.querySelector(`#tipo_servico input[value="${servico}"]`);
+    if (checkbox && !hasCombinado) {
+      checkbox.checked = true;
+    }
+  });
+
   document.getElementById('clienteIndex').value = id;
   modal.show();
 }
@@ -371,7 +389,21 @@ function inicializarEventos() {
 
   clienteForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const tipoServico = Array.from(document.querySelectorAll('#tipo_servico input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
+    // Coletar valores dos checkboxes
+    const checkboxes = Array.from(document.querySelectorAll('#tipo_servico input[type="checkbox"]:checked'));
+    let tipoServico = [];
+    
+    checkboxes.forEach(checkbox => {
+      if (checkbox.value === 'Escrita Fiscal,Contábil,Departamento Pessoal') {
+        tipoServico.push('Escrita Fiscal', 'Contábil', 'Departamento Pessoal');
+      } else {
+        tipoServico.push(checkbox.value);
+      }
+    });
+
+    // Remover duplicatas
+    tipoServico = [...new Set(tipoServico)];
+
     const cliente = {
       codigo: document.getElementById('codigo').value,
       nome: document.getElementById('nome').value,
