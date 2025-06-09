@@ -54,10 +54,10 @@
                 <input type="date" class="form-control" id="dataRegistro" required>
               </div>
               <div class="col-md-6 mb-3">
-                <label for="clienteId" class="form-label">Cliente *</label>
-                <select class="form-select" id="clienteId" required>
-                  <option value="">Selecione um cliente</option>
-                </select>
+                <label for="clienteSearch" class="form-label">Cliente *</label>
+                <input type="text" class="form-control" id="clienteSearch" autocomplete="off" required>
+                <input type="hidden" id="clienteId" required>
+                <div id="clienteSuggestions" class="list-group autocomplete-suggestions"></div>
               </div>
               <div class="col-md-12 mb-3">
                 <label for="tituloDescricao" class="form-label">Título da Descrição *</label>
@@ -112,7 +112,6 @@
       </div>
     </div>
   </div>
-  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="config.js"></script>
   <script src="auth.js"></script>

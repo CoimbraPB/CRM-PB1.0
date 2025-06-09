@@ -82,20 +82,6 @@ async function popularClientes() {
     }
     clientesOcorrencias = await response.json();
     console.log('Clientes recebidos:', clientesOcorrencias.length, clientesOcorrencias);
-    const clienteSelect = document.getElementById('clienteId');
-    if (!clienteSelect) {
-      console.error('Elemento clienteId não encontrado');
-      showErrorToast('Erro: Elemento de seleção de clientes não encontrado.');
-      return;
-    }
-    clienteSelect.innerHTML = '<option value="">Selecione um cliente</option>';
-    clientesOcorrencias.forEach(cliente => {
-      const option = document.createElement('option');
-      option.value = cliente.id;
-      option.textContent = `${cliente.codigo} - ${cliente.nome}`;
-      clienteSelect.appendChild(option);
-    });
-    console.log('Dropdown de clientes populado com sucesso');
   } catch (error) {
     console.error('Erro ao carregar clientes:', error);
     showErrorToast('Erro ao carregar lista de clientes: ' + error.message);
@@ -164,12 +150,14 @@ async function renderizarOcorrencias() {
   }
 }
 
-function abrirModalCriarOcorrencia() {
+function abrirModal() {
   const modalElement = document.getElementById('ocorrenciaModal');
   const modal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
   document.getElementById('ocorrenciaModalLabel').textContent = 'Criar Ocorrência';
   document.getElementById('ocorrenciaForm').reset();
   document.getElementById('ocorrenciaId').value = '';
+  document.getElementById('clienteId').value = '';
+  document.getElementById('clienteSearch').value = '';
   document.getElementById('dataRegistro').value = getDataAtual();
   modal.show();
 }
@@ -186,7 +174,9 @@ function editarOcorrencia(id) {
   document.getElementById('ocorrenciaModalLabel').textContent = 'Editar Ocorrência';
   document.getElementById('ocorrenciaId').value = id;
   document.getElementById('dataRegistro').value = ocorrencia.data_registro ? ocorrencia.data_registro.split('T')[0] : '';
-  document.getElementById('clienteId').value = ocorrencia.cliente_id || '';
+  const cliente = clientesOcorrencias.find(c => c.id === ocorrencia.cliente_id) || { id: '', codigo: '', nome: '' };
+  document.getElementById('clienteId').value = cliente.id;
+  document.getElementById('clienteSearch').value = cliente.id ? `${cliente.codigo} - ${cliente.nome}` : '';
   document.getElementById('tituloDescricao').value = ocorrencia.titulo_descricao || '';
   document.getElementById('descricaoApontamento').value = ocorrencia.descricao_apontamento || '';
   document.getElementById('responsavelInterno').value = ocorrencia.responsavel_interno || '';
@@ -254,8 +244,10 @@ async function salvarOcorrencia(event) {
 
     showSuccessToast(id ? 'Ocorrência atualizada com sucesso!' : 'Ocorrência criada com sucesso!');
     modal.hide();
-    removerModalBackdrop(); // Garante a remoção do backdrop
+    removerModalBackdrop();
     document.getElementById('ocorrenciaForm').reset();
+    document.getElementById('clienteId').value = '';
+    document.getElementById('clienteSearch').value = '';
     document.getElementById('dataRegistro').value = getDataAtual();
     await renderizarOcorrencias();
     console.log('Ocorrência salva e tabela atualizada');
@@ -263,6 +255,44 @@ async function salvarOcorrencia(event) {
     console.error('Erro ao salvar ocorrência:', error);
     showErrorToast('Erro ao salvar ocorrência: ' + error.message);
   }
+}
+
+// Função para mostrar sugestões de clientes
+function mostrarSugestoesClientes(termo) {
+  const suggestionsContainer = document.getElementById('clienteSuggestions');
+  suggestionsContainer.innerHTML = '';
+  if (!termo.trim()) {
+    suggestionsContainer.style.display = 'none';
+    return;
+  }
+
+  const termoLower = termo.toLowerCase();
+  const clientesFiltrados = clientesOcorrencias.filter(cliente =>
+    cliente.codigo.toLowerCase().includes(termoLower) ||
+    cliente.nome.toLowerCase().includes(termoLower)
+  );
+
+  if (clientesFiltrados.length === 0) {
+    suggestionsContainer.style.display = 'none';
+    return;
+  }
+
+  clientesFiltrados.forEach(cliente => {
+    const suggestionItem = document.createElement('a');
+    suggestionItem.href = '#';
+    suggestionItem.classList.add('list-group-item', 'list-group-item-action');
+    suggestionItem.textContent = `${cliente.codigo} - ${cliente.nome}`;
+    suggestionItem.dataset.clienteId = cliente.id;
+    suggestionItem.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('clienteSearch').value = `${cliente.codigo} - ${cliente.nome}`;
+      document.getElementById('clienteId').value = cliente.id;
+      suggestionsContainer.innerHTML = '';
+      suggestionsContainer.style.display = 'none';
+    });
+    suggestionsContainer.appendChild(suggestionItem);
+  });
+  suggestionsContainer.style.display = 'block';
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -281,35 +311,62 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const form = document.getElementById('ocorrenciaForm');
   const dataRegistroInput = document.getElementById('dataRegistro');
+  const clienteSearchInput = document.getElementById('clienteSearch');
   const criarOcorrenciaBtn = document.querySelector('button[data-bs-target="#ocorrenciaModal"]');
   const cancelarBtn = document.getElementById('cancelarOcorrencia');
+  const suggestionsContainer = document.getElementById('clienteSuggestions');
 
-  if (form && dataRegistroInput && criarOcorrenciaBtn && cancelarBtn) {
+  if (form && dataRegistroInput && clienteSearchInput && criarOcorrenciaBtn && cancelarBtn && suggestionsContainer) {
     dataRegistroInput.value = getDataAtual();
     form.addEventListener('submit', salvarOcorrencia);
-    criarOcorrenciaBtn.addEventListener('click', abrirModalCriarOcorrencia);
+    criarOcorrenciaBtn.addEventListener('click', abrirModal);
+
+    // Evento de busca no campo cliente
+    clienteSearchInput.addEventListener('input', () => {
+      const termo = clienteSearchInput.value;
+      if (!termo.trim()) {
+        document.getElementById('clienteId').value = '';
+      }
+      mostrarSugestoesClientes(termo);
+    });
+
+    // Esconder sugestões ao clicar fora
+    document.addEventListener('click', (e) => {
+      if (!clienteSearchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+        suggestionsContainer.innerHTML = '';
+        suggestionsContainer.style.display = 'none';
+      }
+    });
 
     // Evento para o botão Cancelar
     cancelarBtn.addEventListener('click', () => {
       const modalElement = document.getElementById('ocorrenciaModal');
       const modal = bootstrap.Modal.getInstance(modalElement);
       modal.hide();
-      removerModalBackdrop(); // Garante a remoção do backdrop
+      removerModalBackdrop();
       form.reset();
+      document.getElementById('clienteId').value = '';
+      document.getElementById('clienteSearch').value = '';
       document.getElementById('dataRegistro').value = getDataAtual();
+      suggestionsContainer.innerHTML = '';
+      suggestionsContainer.style.display = 'none';
     });
 
     // Evento para quando o modal é completamente fechado
     const modalElement = document.getElementById('ocorrenciaModal');
     modalElement.addEventListener('hidden.bs.modal', () => {
-      removerModalBackdrop(); // Garante a remoção do backdrop
+      removerModalBackdrop();
       form.reset();
+      document.getElementById('clienteId').value = '';
+      document.getElementById('clienteSearch').value = '';
       document.getElementById('dataRegistro').value = getDataAtual();
+      suggestionsContainer.innerHTML = '';
+      suggestionsContainer.style.display = 'none';
     });
 
     console.log('Formulário e botões inicializados');
   } else {
-    console.error('Elementos não encontrados:', { form, dataRegistroInput, criarOcorrenciaBtn, cancelarBtn });
+    console.error('Elementos não encontrados:', { form, dataRegistroInput, clienteSearchInput, criarOcorrenciaBtn, cancelarBtn, suggestionsContainer });
   }
 
   await popularClientes();
