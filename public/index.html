@@ -68,6 +68,11 @@
             <th>Filial</th>
             <th>Matriz</th>
             <th>Grupo</th>
+            <th>Segmento</th>
+            <th>Data de Entrada</th>
+            <th>Data de Saída</th>
+            <th>Sistema</th>
+            <th>Tipo de Serviço</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -88,127 +93,220 @@
     </div>
   </div>
 
-  <!-- Modal para cadastro/edição -->
-  <div class="modal fade" id="clienteModal" tabindex="-1" aria-labelledby="clienteModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <form id="clienteForm" class="modal-content">
-        <div class="modal-header bg-green-500 text-white">
-          <h5 class="modal-title" id="clienteModalLabel">Adicionar Cliente</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
-        </div>
-        <div class="modal-body">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label for="codigo" class="form-label fw-semibold">Código Interno <span class="text-danger">*</span></label>
-              <input type="text" id="codigo" class="form-control" required />
-            </div>
-            <div class="col-md-6">
-              <label for="nome" class="form-label fw-semibold">Nome/Apelido <span class="text-danger">*</span></label>
-              <input type="text" id="nome" class="form-control" required />
-            </div>
-            <div class="col-md-6">
-              <label for="razao_social" class="form-label fw-semibold">Razão Social</label>
-              <input type="text" id="razao_social" class="form-control" />
-            </div>
-            <div class="col-md-6">
-              <label for="cpf_cnpj" class="form-label fw-semibold">CPF/CNPJ <span class="text-danger">*</span></label>
-              <input type="text" id="cpf_cnpj" class="form-control" required />
-            </div>
-            <div class="col-md-6">
-              <label for="regime_fiscal" class="form-label fw-semibold">Regime Fiscal</label>
-              <select id="regime_fiscal" class="form-select">
-                <option value="Simples Nacional">Simples Nacional</option>
-                <option value="Lucro Presumido">Lucro Presumido</option>
-                <option value="Lucro Real">Lucro Real</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="situacao" class="form-label fw-semibold">Situação</label>
-              <select id="situacao" class="form-select">
-                <option value="Ativo">Ativo</option>
-                <option value="Inativo">Inativo</option>
-                <option value="Pendente">Pendente</option>
-                <option value="Bloqueado">Bloqueado</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="tipo_pessoa" class="form-label fw-semibold">Tipo de Pessoa</label>
-              <select id="tipo_pessoa" class="form-select">
-                <option value="Física">Física</option>
-                <option value="Jurídica">Jurídica</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="estado" class="form-label fw-semibold">Estado</label>
-              <select id="estado" class="form-select">
-                <option value="AC">Acre</option>
-                <option value="AL">Alagoas</option>
-                <option value="AP">Amapá</option>
-                <option value="AM">Amazonas</option>
-                <option value="BA">Bahia</option>
-                <option value="CE">Ceará</option>
-                <option value="DF">Distrito Federal</option>
-                <option value="ES">Espírito Santo</option>
-                <option value="GO">Goiás</option>
-                <option value="MA">Maranhão</option>
-                <option value="MT">Mato Grosso</option>
-                <option value="MS">Mato Grosso do Sul</option>
-                <option value="MG">Minas Gerais</option>
-                <option value="PA">Pará</option>
-                <option value="PB">Paraíba</option>
-                <option value="PR">Paraná</option>
-                <option value="PE">Pernambuco</option>
-                <option value="PI">Piauí</option>
-                <option value="RJ">Rio de Janeiro</option>
-                <option value="RN">Rio Grande do Norte</option>
-                <option value="RS">Rio Grande do Sul</option>
-                <option value="RO">Rondônia</option>
-                <option value="RR">Roraima</option>
-                <option value="SC">Santa Catarina</option>
-                <option value="SP">São Paulo</option>
-                <option value="SE">Sergipe</option>
-                <option value="TO">Tocantins</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="municipio" class="form-label fw-semibold">Município</label>
-              <input type="text" id="municipio" class="form-control" />
-            </div>
-            <div class="col-md-6">
-              <label for="status" class="form-label fw-semibold">Status</label>
-              <select id="status" class="form-select">
-                <option value="Ativo">Ativo</option>
-                <option value="Inativo">Inativo</option>
-                <option value="Potencial">Potencial</option>
-                <option value="Bloqueado">Bloqueado</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="possui_ie" class="form-label fw-semibold">Possui I.E.?</label>
-              <select id="possui_ie" class="form-select">
-                <option value="Sim">Sim</option>
-                <option value="Não">Não</option>
-                <option value="Isento">Isento</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="ie" class="form-label fw-semibold">Inscrição Estadual (I.E.)</label>
-              <input type="text" id="ie" class="form-control" />
-            </div>
-            <div class="col-md-6">
-              <label for="filial" class="form-label fw-semibold">Filial</label>
-              <select id="filial" class="form-select">
-                <option value="Sim">Sim</option>
-                <option value="Não">Não</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="empresa_matriz" class="form-label fw-semibold">Empresa Matriz</label>
-              <input type="text" id="empresa_matriz" class="form-control" />
-            </div>
-            <div class="col-md-6">
-              <label for="grupo" class="form-label fw-semibold">Grupo</label>
-              <input type="text" id="grupo" class="form-control" />
+<!-- Modal para cadastro/edição -->
+<div class="modal fade" id="clienteModal" tabindex="-1" aria-labelledby="clienteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <form id="clienteForm" class="modal-content">
+      <div class="modal-header bg-green-500 text-white">
+        <h5 class="modal-title" id="clienteModalLabel">Adicionar Cliente</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="codigo" class="form-label fw-semibold">Código Interno <span class="text-danger">*</span></label>
+            <input type="text" id="codigo" class="form-control" required />
+          </div>
+          <div class="col-md-6">
+            <label for="nome" class="form-label fw-semibold">Nome/Apelido <span class="text-danger">*</span></label>
+            <input type="text" id="nome" class="form-control" required />
+          </div>
+          <div class="col-md-6">
+            <label for="razao_social" class="form-label fw-semibold">Razão Social</label>
+            <input type="text" id="razao_social" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label for="cpf_cnpj" class="form-label fw-semibold">CPF/CNPJ <span class="text-danger">*</span></label>
+            <input type="text" id="cpf_cnpj" class="form-control" required />
+          </div>
+          <div class="col-md-6">
+            <label for="regime_fiscal" class="form-label fw-semibold">Regime Fiscal</label>
+            <select id="regime_fiscal" class="form-select">
+              <option value="Simples Nacional">Simples Nacional</option>
+              <option value="Lucro Presumido">Lucro Presumido</option>
+              <option value="Lucro Real">Lucro Real</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="situacao" class="form-label fw-semibold">Situação</label>
+            <select id="situacao" class="form-select">
+              <option value="Ativo">Ativo</option>
+              <option value="Inativo">Inativo</option>
+              <option value="Pendente">Pendente</option>
+              <option value="Bloqueado">Bloqueado</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="tipo_pessoa" class="form-label fw-semibold">Tipo de Pessoa</label>
+            <select id="tipo_pessoa" class="form-select">
+              <option value="Física">Física</option>
+              <option value="Jurídica">Jurídica</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="estado" class="form-label fw-semibold">Estado</label>
+            <select id="estado" class="form-select">
+              <option value="AC">Acre</option>
+              <option value="AL">Alagoas</option>
+              <option value="AP">Amapá</option>
+              <option value="AM">Amazonas</option>
+              <option value="BA">Bahia</option>
+              <option value="CE">Ceará</option>
+              <option value="DF">Distrito Federal</option>
+              <option value="ES">Espírito Santo</option>
+              <option value="GO">Goiás</option>
+              <option value="MA">Maranhão</option>
+              <option value="MT">Mato Grosso</option>
+              <option value="MS">Mato Grosso do Sul</option>
+              <option value="MG">Minas Gerais</option>
+              <option value="PA">Pará</option>
+              <option value="PB">Paraíba</option>
+              <option value="PR">Paraná</option>
+              <option value="PE">Pernambuco</option>
+              <option value="PI">Piauí</option>
+              <option value="RJ">Rio de Janeiro</option>
+              <option value="RN">Rio Grande do Norte</option>
+              <option value="RS">Rio Grande do Sul</option>
+              <option value="RO">Rondônia</option>
+              <option value="RR">Roraima</option>
+              <option value="SC">Santa Catarina</option>
+              <option value="SP">São Paulo</option>
+              <option value="SE">Sergipe</option>
+              <option value="TO">Tocantins</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="municipio" class="form-label fw-semibold">Município</label>
+            <input type="text" id="municipio" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label for="status" class="form-label fw-semibold">Status</label>
+            <select id="status" class="form-select">
+              <option value="Ativo">Ativo</option>
+              <option value="Inativo">Inativo</option>
+              <option value="Potencial">Potencial</option>
+              <option value="Bloqueado">Bloqueado</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="possui_ie" class="form-label fw-semibold">Possui I.E.?</label>
+            <select id="possui_ie" class="form-select">
+              <option value="Sim">Sim</option>
+              <option value="Não">Não</option>
+              <option value="Isento">Isento</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="ie" class="form-label fw-semibold">Inscrição Estadual (I.E.)</label>
+            <input type="text" id="ie" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label for="filial" class="form-label fw-semibold">Filial</label>
+            <select id="filial" class="form-select">
+              <option value="Sim">Sim</option>
+              <option value="Não">Não</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="empresa_matriz" class="form-label fw-semibold">Empresa Matriz</label>
+            <input type="text" id="empresa_matriz" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label for="grupo" class="form-label fw-semibold">Grupo</label>
+            <input type="text" id="grupo" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label for="segmento" class="form-label fw-semibold">Segmento</label>
+            <select id="segmento" class="form-select">
+              <option value="">Selecione</option>
+              <option value="Comércio">Comércio</option>
+              <option value="Holding">Holding</option>
+              <option value="Indústria">Indústria</option>
+              <option value="Locação">Locação</option>
+              <option value="Produtor Rural">Produtor Rural</option>
+              <option value="Serviço">Serviço</option>
+              <option value="Transporte">Transporte</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="data_entrada" class="form-label fw-semibold">Data de Entrada</label>
+            <input type="date" id="data_entrada" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label for="data_saida" class="form-label fw-semibold">Data de Saída</label>
+            <input type="date" id="data_saida" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label for="sistema" class="form-label fw-semibold">Sistema</label>
+            <select id="sistema" class="form-select">
+              <option value="">Selecione</option>
+              <option value="Domínio">Domínio</option>
+              <option value="Protheus">Protheus</option>
+              <option value="Rodopar">Rodopar</option>
+              <option value="SAP">SAP</option>
+              <option value="Senior">Senior</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Tipo de Serviço</label>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tipo_servico" value="Escrita Fiscal, Contábil, Departamento Pessoal (DP)" id="tipo_servico_1" />
+                  <label class="form-check-label" for="tipo_servico_1">Escrita Fiscal, Contábil, Departamento Pessoal (DP)</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tipo_servico" value="Escrita Fiscal" id="tipo_servico_2" />
+                  <label class="form-check-label" for="tipo_servico_2">Escrita Fiscal</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tipo_servico" value="Departamento Pessoal" id="tipo_servico_3" />
+                  <label class="form-check-label" for="tipo_servico_3">Departamento Pessoal</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tipo_servico" value="Departamento Pessoal Parcial" id="tipo_servico_4" />
+                  <label class="form-check-label" for="tipo_servico_4">Departamento Pessoal Parcial</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tipo_servico" value="Societário" id="tipo_servico_5" />
+                  <label class="form-check-label" for="tipo_servico_5">Societário</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tipo_servico" value="BPO Financeiro" id="tipo_servico_6" />
+                  <label class="form-check-label" for="tipo_servico_6">BPO Financeiro</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tipo_servico" value="Consultoria Tributária" id="tipo_servico_7" />
+                  <label class="form-check-label" for="tipo_servico_7">Consultoria Tributária</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tipo_servico" value="Consultoria Jurídica" id="tipo_servico_8" />
+                  <label class="form-check-label" for="tipo_servico_8">Consultoria Jurídica</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tipo_servico" value="Consultoria Reforma Tributária" id="tipo_servico_9" />
+                  <label class="form-check-label" for="tipo_servico_9">Consultoria Reforma Tributária</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tipo_servico" value="Treinamento Fiscal e Financeiro" id="tipo_servico_10" />
+                  <label class="form-check-label" for="tipo_servico_10">Treinamento Fiscal e Financeiro</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tipo_servico" value="Treinamento Fiscal" id="tipo_servico_11" />
+                  <label class="form-check-label" for="tipo_servico_11">Treinamento Fiscal</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tipo_servico" value="Treinamento Financeiro" id="tipo_servico_12" />
+                  <label class="form-check-label" for="tipo_servico_12">Treinamento Financeiro</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tipo_servico" value="Serviço Extra" id="tipo_servico_13" />
+                  <label class="form-check-label" for="tipo_servico_13">Serviço Extra</label>
+                </div>
+              </div>
             </div>
           </div>
           <input type="hidden" id="clienteIndex" />
@@ -220,7 +318,6 @@
       </form>
     </div>
   </div>
-
   <!-- Contêiner para toasts -->
   <div class="toast-container position-fixed bottom-0 end-0 p-3">
     <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">

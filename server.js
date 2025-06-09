@@ -238,7 +238,8 @@ app.get('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (r
 app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
   const {
     codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
-    estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo
+    estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo,
+    segmento, data_entrada, data_saida, sistema, tipo_servico
   } = req.body;
 
   if (!codigo || !nome) {
@@ -256,14 +257,16 @@ app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (
     const result = await client.query(
       `INSERT INTO clientes (
         codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
-        estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo,
+        segmento, data_entrada, data_saida, sistema, tipo_servico
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
       RETURNING *`,
       [
         codigo, nome, razao_social || null, cpf_cnpj || null, regime_fiscal || null,
         situacao || null, tipo_pessoa || null, estado || null, municipio || null,
-        status || null, possui_ie || false, ie || null, filial || null,
-        empresa_matriz || null, grupo || null
+        status || null, possui_ie || null, ie || null, filial || null,
+        empresa_matriz || null, grupo || null, segmento || null, data_entrada || null,
+        data_saida || null, sistema || null, tipo_servico || null
       ]
     );
     console.log('POST /api/clientes:', { id: result.rows[0].id });
@@ -281,7 +284,8 @@ app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), asyn
   const { id } = req.params;
   const {
     codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
-    estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo
+    estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo,
+    segmento, data_entrada, data_saida, sistema, tipo_servico
   } = req.body;
 
   if (!codigo || !nome) {
@@ -300,14 +304,16 @@ app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), asyn
       `UPDATE clientes SET
         codigo = $1, nome = $2, razao_social = $3, cpf_cnpj = $4, regime_fiscal = $5,
         situacao = $6, tipo_pessoa = $7, estado = $8, municipio = $9, status = $10,
-        possui_ie = $11, ie = $12, filial = $13, empresa_matriz = $14, grupo = $15
-      WHERE id = $16
+        possui_ie = $11, ie = $12, filial = $13, empresa_matriz = $14, grupo = $15,
+        segmento = $16, data_entrada = $17, data_saida = $18, sistema = $19, tipo_servico = $20
+      WHERE id = $21
       RETURNING *`,
       [
         codigo, nome, razao_social || null, cpf_cnpj || null, regime_fiscal || null,
         situacao || null, tipo_pessoa || null, estado || null, municipio || null,
-        status || null, possui_ie || false, ie || null, filial || null,
-        empresa_matriz || null, grupo || null, id
+        status || null, possui_ie || null, ie || null, filial || null,
+        empresa_matriz || null, grupo || null, segmento || null, data_entrada || null,
+        data_saida || null, sistema || null, tipo_servico || null, id
       ]
     );
     if (result.rows.length === 0) {
@@ -337,24 +343,28 @@ app.post('/api/clientes/import', async (req, res) => {
       await client.query(
         `INSERT INTO clientes (
           codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
-          estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+          estado, municipio, status, possui_ie, ie, filial, empresa_matriz, grupo,
+          segmento, data_entrada, data_saida, sistema, tipo_servico
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
         ON CONFLICT (codigo) DO UPDATE SET
           nome = EXCLUDED.nome, razao_social = EXCLUDED.razao_social, cpf_cnpj = EXCLUDED.cpf_cnpj,
           regime_fiscal = EXCLUDED.regime_fiscal, situacao = EXCLUDED.situacao,
           tipo_pessoa = EXCLUDED.tipo_pessoa, estado = EXCLUDED.estado, municipio = EXCLUDED.municipio,
           status = EXCLUDED.status, possui_ie = EXCLUDED.possui_ie, ie = EXCLUDED.ie,
-          filial = EXCLUDED.filial, empresa_matriz = EXCLUDED.empresa_matriz, grupo = EXCLUDED.grupo`,
+          filial = EXCLUDED.filial, empresa_matriz = EXCLUDED.empresa_matriz, grupo = EXCLUDED.grupo,
+          segmento = EXCLUDED.segmento, data_entrada = EXCLUDED.data_entrada, data_saida = EXCLUDED.data_saida,
+          sistema = EXCLUDED.sistema, tipo_servico = EXCLUDED.tipo_servico`,
         [
           cliente.codigo, cliente.nome, cliente.razao_social, cliente.cpf_cnpj,
           cliente.regime_fiscal, cliente.situacao, cliente.tipo_pessoa, cliente.estado,
           cliente.municipio, cliente.status, cliente.possui_ie, cliente.ie, cliente.filial,
-          cliente.empresa_matriz, cliente.grupo
+          cliente.empresa_matriz, cliente.grupo, cliente.segmento, cliente.data_entrada,
+          cliente.data_saida, cliente.sistema, cliente.tipo_servico
         ]
       );
     }
     console.log('POST /api/clientes/import:', clientes.length);
-    res.json({ success: true, message: 'Clientes importados com sucesso' });
+    res.json({ success: true, message: ' clientes importados com sucesso' });
   } catch (error) {
     console.error('Erro ao importar clientes:', error);
     res.status(500).json({ error: 'Erro ao importar clientes' });
