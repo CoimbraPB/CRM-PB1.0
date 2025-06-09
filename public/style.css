@@ -85,8 +85,8 @@ body {
 
 /* Ajuste para o cabeçalho da coluna Ações */
 .table thead th:last-child {
-  background: #10b981 !important; /* Mantém a cor do cabeçalho consistente */
-  color: white !important;
+  background: #f9fafb !important; /* Mantém a cor do cabeçalho consistente */
+  color: black !important;
 }
 
 /* Garante que a tabela respeite o scroll horizontal */
