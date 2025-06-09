@@ -103,42 +103,42 @@ async function renderizarClientes() {
     const fim = inicio + clientesPorPagina;
     const clientesPagina = clientesFiltrados.slice(inicio, fim);
 
-clientesPagina.forEach(cliente => {
-  const tr = document.createElement('tr');
-  tr.style.cursor = 'pointer';
-  tr.addEventListener('click', (e) => {
-    if (e.target.closest('.btn-danger')) return;
-    editarCliente(cliente.id);
-  });
-  tr.innerHTML = `
-    <td>${cliente.codigo || ''}</td>
-    <td>${cliente.nome || ''}</td>
-    <td>${cliente.razao_social || ''}</td>
-    <td>${cliente.cpf_cnpj || ''}</td>
-    <td>${cliente.regime_fiscal || ''}</td>
-    <td>${cliente.situacao || ''}</td>
-    <td>${cliente.tipo_pessoa || ''}</td>
-    <td>${cliente.estado || ''}</td>
-    <td>${cliente.municipio || ''}</td>
-    <td>${cliente.status || ''}</td>
-    <td>${cliente.possui_ie || ''}</td>
-    <td>${cliente.ie || ''}</td>
-    <td>${cliente.filial || ''}</td>
-    <td>${cliente.empresa_matriz || ''}</td>
-    <td>${cliente.grupo || ''}</td>
-    <td>${cliente.segmento || ''}</td>
-    <td>${cliente.data_entrada ? cliente.data_entrada.substring(0, 10).split('-').reverse().join('/') : ''}</td>
-    <td>${cliente.data_saida ? cliente.data_saida.substring(0, 10).split('-').reverse().join('/') : ''}</td>
-    <td>${cliente.sistema || ''}</td>
-    <td>${Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ') : ''}</td>
-    <td class="fixed-action-column">
-      <button class="btn btn-danger btn-sm" onclick="excluirCliente(${cliente.id})" title="Excluir">
-        <i class="bi bi-trash-fill"></i>
-      </button>
-    </td>
-  `;
-  clientesBody.appendChild(tr);
-});
+    clientesPagina.forEach(cliente => {
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-danger')) return;
+        editarCliente(cliente.id);
+      });
+      tr.innerHTML = `
+        <td>${cliente.codigo || ''}</td>
+        <td>${cliente.nome || ''}</td>
+        <td>${cliente.razao_social || ''}</td>
+        <td>${cliente.cpf_cnpj || ''}</td>
+        <td>${cliente.regime_fiscal || ''}</td>
+        <td>${cliente.situacao || ''}</td>
+        <td>${cliente.tipo_pessoa || ''}</td>
+        <td>${cliente.estado || ''}</td>
+        <td>${cliente.municipio || ''}</td>
+        <td>${cliente.status || ''}</td>
+        <td>${cliente.possui_ie || ''}</td>
+        <td>${cliente.ie || ''}</td>
+        <td>${cliente.filial || ''}</td>
+        <td>${cliente.empresa_matriz || ''}</td>
+        <td>${cliente.grupo || ''}</td>
+        <td>${cliente.segmento || ''}</td>
+        <td>${cliente.data_entrada ? cliente.data_entrada.substring(0, 10).split('-').reverse().join('/') : ''}</td>
+        <td>${cliente.data_saida ? cliente.data_saida.substring(0, 10).split('-').reverse().join('/') : ''}</td>
+        <td>${cliente.sistema || ''}</td>
+        <td>${Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ') : ''}</td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="excluirCliente(${cliente.id})" title="Excluir">
+            <i class="bi bi-trash-fill"></i>
+          </button>
+        </td>
+      `;
+      clientesBody.appendChild(tr);
+    });
 
     paginacaoInfo.textContent = `Página ${paginaAtual} de ${totalPaginas} (${clientesFiltrados.length} clientes)`;
   } catch (error) {
@@ -147,6 +147,7 @@ clientesPagina.forEach(cliente => {
   }
 }
 
+// Restante do script.js permanece inalterado...
 function importarClientes(files) {
   if (files.length === 0) return;
   
@@ -209,7 +210,6 @@ function abrirModal() {
   document.getElementById('clienteModalLabel').textContent = 'Adicionar Cliente';
   document.getElementById('clienteForm').reset();
   document.getElementById('clienteIndex').value = '';
-  // Limpar checkboxes de tipo_servico
   document.querySelectorAll('#tipo_servico input[type="checkbox"]').forEach(checkbox => {
     checkbox.checked = false;
   });
@@ -241,25 +241,21 @@ function editarCliente(id) {
   document.getElementById('empresa_matriz').value = cliente.empresa_matriz || '';
   document.getElementById('grupo').value = cliente.grupo || '';
   document.getElementById('segmento').value = cliente.segmento || '';
-  // Formatar datas para YYYY-MM-DD
   document.getElementById('data_entrada').value = cliente.data_entrada ? cliente.data_entrada.split('T')[0] : '';
   document.getElementById('data_saida').value = cliente.data_saida ? cliente.data_saida.split('T')[0] : '';
   document.getElementById('sistema').value = cliente.sistema || '';
 
-  // Configurar checkboxes de tipo_servico
   document.querySelectorAll('#tipo_servico input[type="checkbox"]').forEach(checkbox => {
     checkbox.checked = false;
   });
 
   const tipoServico = Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico : [];
-  // Verificar se contém Escrita Fiscal, Contábil e Departamento Pessoal
   const hasCombinado = tipoServico.includes('Escrita Fiscal') && 
                       tipoServico.includes('Contábil') && 
                       tipoServico.includes('Departamento Pessoal');
   if (hasCombinado) {
     document.getElementById('tipo_servico_combinado').checked = true;
   }
-  // Marcar outros checkboxes individualmente
   tipoServico.forEach(servico => {
     const checkbox = document.querySelector(`#tipo_servico input[value="${servico}"]`);
     if (checkbox && !hasCombinado) {
@@ -392,7 +388,6 @@ function inicializarEventos() {
 
   clienteForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    // Coletar valores dos checkboxes
     const checkboxes = Array.from(document.querySelectorAll('#tipo_servico input[type="checkbox"]:checked'));
     let tipoServico = [];
     
@@ -404,10 +399,8 @@ function inicializarEventos() {
       }
     });
 
-    // Remover duplicatas
     tipoServico = [...new Set(tipoServico)];
 
-    // Coletar datas como strings ou null
     const dataEntrada = document.getElementById('data_entrada').value || null;
     const dataSaida = document.getElementById('data_saida').value || null;
 
@@ -435,7 +428,6 @@ function inicializarEventos() {
     };
     const id = document.getElementById('clienteIndex').value;
 
-    // Validação de datas
     if (cliente.data_entrada && cliente.data_saida && new Date(cliente.data_saida) < new Date(cliente.data_entrada)) {
       showErrorToast('Data de Saída deve ser posterior à Data de Entrada.');
       return;

@@ -69,10 +69,9 @@ body {
   align-items: center;
   font-size: 0.9rem;
 }
-
-/* Estilo para a coluna fixa de Ações */
-.table th:last-child,
-.table td:last-child {
+/* Estilo para a coluna fixa de Ações apenas na tabela de clientes */
+.clientes-table th:last-child,
+.clientes-table td:last-child {
   position: sticky;
   right: 0;
   background: #ffffff; /* Fundo branco para evitar transparência */
@@ -82,22 +81,19 @@ body {
   text-align: center; /* Centraliza o botão */
   box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1); /* Sombra suave à esquerda para destacar */
 }
-
 /* Ajuste para o cabeçalho da coluna Ações */
-.table thead th:last-child {
+.clientes-table thead th:last-child {
   background: #f9fafb !important; /* Mantém a cor do cabeçalho consistente */
   color: black !important;
-}
-
+}  
 /* Garante que a tabela respeite o scroll horizontal */
 .table-container {
   position: relative; /* Necessário para o sticky funcionar */
 }
-
 /* Evita que o botão de excluir quebre o layout em telas pequenas */
 @media (max-width: 576px) {
-  .table th:last-child,
-  .table td:last-child {
+  .clientes-table th:last-child,
+  .clientes-table td:last-child {
     width: 60px; /* Reduz a largura em telas menores */
     min-width: 60px;
   }
