@@ -234,6 +234,10 @@ app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (
     return res.status(400).json({ error: 'Código e nome são obrigatórios' });
   }
 
+  // Validar formato das datas
+  const dataEntradaValida = data_entrada && /^\d{4}-\d{2}-\d{2}$/.test(data_entrada) ? data_entrada : null;
+  const dataSaidaValida = data_saida && /^\d{4}-\d{2}-\d{2}$/.test(data_saida) ? data_saida : null;
+
   // Serializar tipo_servico como string JSON
   const tipoServicoJson = tipo_servico && Array.isArray(tipo_servico) ? JSON.stringify(tipo_servico) : '[]';
 
@@ -255,8 +259,8 @@ app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (
         codigo, nome, razao_social || null, cpf_cnpj || null, regime_fiscal || null,
         situacao || null, tipo_pessoa || null, estado || null, municipio || null,
         status || null, possui_ie || false, ie || null, filial || null,
-        empresa_matriz || null, grupo || null, segmento || null, data_entrada || null,
-        data_saida || null, sistema || null, tipoServicoJson
+        empresa_matriz || null, grupo || null, segmento || null, dataEntradaValida,
+        dataSaidaValida, sistema || null, tipoServicoJson
       ]
     );
     console.log('POST /api/clientes:', { id: result.rows[0].id });
@@ -283,6 +287,10 @@ app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), asyn
     return res.status(400).json({ error: 'Código e nome são obrigatórios' });
   }
 
+  // Validar formato das datas
+  const dataEntradaValida = data_entrada && /^\d{4}-\d{2}-\d{2}$/.test(data_entrada) ? data_entrada : null;
+  const dataSaidaValida = data_saida && /^\d{4}-\d{2}-\d{2}$/.test(data_saida) ? data_saida : null;
+
   // Serializar tipo_servico como string JSON
   const tipoServicoJson = tipo_servico && Array.isArray(tipo_servico) ? JSON.stringify(tipo_servico) : '[]';
 
@@ -305,8 +313,8 @@ app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), asyn
         codigo, nome, razao_social || null, cpf_cnpj || null, regime_fiscal || null,
         situacao || null, tipo_pessoa || null, estado || null, municipio || null,
         status || null, possui_ie || false, ie || null, filial || null,
-        empresa_matriz || null, grupo || null, segmento || null, data_entrada || null,
-        data_saida || null, sistema || null, tipoServicoJson, id
+        empresa_matriz || null, grupo || null, segmento || null, dataEntradaValida,
+        dataSaidaValida, sistema || null, tipoServicoJson, id
       ]
     );
     if (result.rows.length === 0) {
@@ -335,7 +343,16 @@ app.post('/api/clientes/import', autenticar(['Operador', 'Gerente', 'Gestor']), 
     await client.connect();
     await client.query('BEGIN');
     for (const cliente of clientes) {
-      const tipoServicoJson = cliente.tipo_servico && Array.isArray(cliente.tipo_servico) ? JSON.stringify(cliente.tipo_servico) : '[]';
+      // Validar formato das datas
+      const dataEntradaValida = cliente.data_entrada && /^\d{4}-\d{2}-\d{2}$/.test(cliente.data_entrada) ? 
+        cliente.data_entrada : null;
+      const dataSaidaValida = cliente.data_saida && /^\d{4}-\d{2}-\d{2}$/.test(cliente.data_saida) ? 
+        cliente.data_saida : null;
+
+      // Serializar tipo_servico
+      const tipoServicoJson = cliente.tipo_servico && Array.isArray(cliente.tipo_servico) ? 
+        JSON.stringify(cliente.tipo_servico) : '[]';
+
       await client.query(
         `INSERT INTO clientes (
           codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
@@ -368,8 +385,7 @@ app.post('/api/clientes/import', autenticar(['Operador', 'Gerente', 'Gestor']), 
           cliente.estado || null, cliente.municipio || null, cliente.status || null,
           cliente.possui_ie || false, cliente.ie || null, cliente.filial || null,
           cliente.empresa_matriz || null, cliente.grupo || null, cliente.segmento || null,
-          cliente.data_entrada || null, cliente.data_saida || null, cliente.sistema || null,
-          tipoServicoJson
+          dataEntradaValida, dataSaidaValida, cliente.sistema || null, tipoServicoJson
         ]
       );
     }

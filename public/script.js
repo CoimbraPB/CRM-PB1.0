@@ -1,3 +1,4 @@
+
 let clientes = [];
 let paginaAtual = 1;
 const clientesPorPagina = 10;
@@ -122,8 +123,8 @@ async function renderizarClientes() {
         <td>${cliente.empresa_matriz || ''}</td>
         <td>${cliente.grupo || ''}</td>
         <td>${cliente.segmento || ''}</td>
-        <td>${cliente.data_entrada || ''}</td>
-        <td>${cliente.data_saida || ''}</td>
+        <td>${cliente.data_entrada ? cliente.data_entrada.split('T')[0] : ''}</td>
+        <td>${cliente.data_saida ? cliente.data_saida.split('T')[0] : ''}</td>
         <td>${cliente.sistema || ''}</td>
         <td>${Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ') : ''}</td>
         <td>
@@ -239,8 +240,9 @@ function editarCliente(id) {
   document.getElementById('empresa_matriz').value = cliente.empresa_matriz || '';
   document.getElementById('grupo').value = cliente.grupo || '';
   document.getElementById('segmento').value = cliente.segmento || '';
-  document.getElementById('data_entrada').value = cliente.data_entrada || '';
-  document.getElementById('data_saida').value = cliente.data_saida || '';
+  // Formatar datas para YYYY-MM-DD
+  document.getElementById('data_entrada').value = cliente.data_entrada ? cliente.data_entrada.split('T')[0] : '';
+  document.getElementById('data_saida').value = cliente.data_saida ? cliente.data_saida.split('T')[0] : '';
   document.getElementById('sistema').value = cliente.sistema || '';
 
   // Configurar checkboxes de tipo_servico
@@ -404,6 +406,10 @@ function inicializarEventos() {
     // Remover duplicatas
     tipoServico = [...new Set(tipoServico)];
 
+    // Coletar datas como strings ou null
+    const dataEntrada = document.getElementById('data_entrada').value || null;
+    const dataSaida = document.getElementById('data_saida').value || null;
+
     const cliente = {
       codigo: document.getElementById('codigo').value,
       nome: document.getElementById('nome').value,
@@ -421,8 +427,8 @@ function inicializarEventos() {
       empresa_matriz: document.getElementById('empresa_matriz').value,
       grupo: document.getElementById('grupo').value,
       segmento: document.getElementById('segmento').value,
-      data_entrada: document.getElementById('data_entrada').value || null,
-      data_saida: document.getElementById('data_saida').value || null,
+      data_entrada: dataEntrada,
+      data_saida: dataSaida,
       sistema: document.getElementById('sistema').value,
       tipo_servico: tipoServico.length > 0 ? tipoServico : []
     };
@@ -437,7 +443,11 @@ function inicializarEventos() {
     try {
       const method = id ? 'PUT' : 'POST';
       const url = id ? `${API_BASE_URL}/api/clientes/${id}` : `${API_BASE_URL}/api/clientes`;
-      console.log('Enviando cliente:', cliente);
+      console.log('Enviando cliente:', {
+        ...cliente,
+        data_entrada: cliente.data_entrada,
+        data_saida: cliente.data_saida
+      });
       const response = await fetch(url, {
         method,
         headers: { 
