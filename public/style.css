@@ -101,25 +101,29 @@ body {
 
 .autocomplete-suggestions {
   position: absolute;
-  z-index: 1050; /* Acima do modal (z-index padrão do modal é 1050) */
-  width: 100%;
-  max-width: 100%; /* Garante que não exceda o pai */
-  max-height: 200px;
+  z-index: 1050; /* Acima do modal */
+  width: 100%; /* Herda a largura do campo de texto */
+  max-width: 100%; /* Limita ao tamanho do container pai */
+  max-height: 150px; /* Reduzido para caber melhor no modal */
   overflow-y: auto;
   display: none;
   border: 1px solid #ced4da;
   border-radius: 0.25rem;
   background-color: #fff;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  margin-top: 0.5rem; /* Espaçamento abaixo do campo de texto */
+  margin-top: 0.25rem; /* Espaçamento ajustado */
+  top: 100%; /* Posiciona logo abaixo do campo */
+  left: 0; /* Alinha à esquerda do container */
 }
 
 .autocomplete-suggestions .list-group-item {
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.75rem; /* Reduzido para economizar espaço */
   cursor: pointer;
-  white-space: nowrap; /* Impede que o texto quebre em várias linhas */
+  white-space: nowrap; /* Impede quebra de linha */
   overflow: hidden; /* Oculta texto que ultrapassa */
-  text-overflow: ellipsis; /* Adiciona "..." se o texto for muito longo */
+  text-overflow: ellipsis; /* Trunca com "..." */
+  max-width: 100%; /* Limita a largura do item */
+  font-size: 0.9rem; /* Tamanho de fonte reduzido para compactação */
 }
 
 .autocomplete-suggestions .list-group-item:hover,
