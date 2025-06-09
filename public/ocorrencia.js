@@ -141,14 +141,9 @@ async function renderizarOcorrencias() {
       tr.innerHTML = `
         <td>${ocorrencia.id || ''}</td>
         <td>${ocorrencia.titulo_descricao || ''}</td>
-        <td>${formatarData(ocorrencia.data_registro)}</td>
         <td>${cliente.codigo} - ${cliente.nome}</td>
-        <td>${ocorrencia.descricao_apontamento || ''}</td>
-        <td>${ocorrencia.responsavel_interno || ''}</td>
-        <td>${ocorrencia.acao_tomada || ''}</td>
-        <td>${ocorrencia.acompanhamento_erica_operacional || ''}</td>
+        <td>${formatarData(ocorrencia.data_registro)}</td>
         <td>${formatarData(ocorrencia.data_resolucao)}</td>
-        <td>${ocorrencia.feedback_cliente || ''}</td>
       `;
       ocorrenciasBody.appendChild(tr);
     });
