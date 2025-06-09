@@ -389,16 +389,23 @@ function inicializarEventos() {
       empresa_matriz: document.getElementById('empresa_matriz').value,
       grupo: document.getElementById('grupo').value,
       segmento: document.getElementById('segmento').value,
-      data_entrada: document.getElementById('data_entrada').value,
-      data_saida: document.getElementById('data_saida').value,
+      data_entrada: document.getElementById('data_entrada').value || null,
+      data_saida: document.getElementById('data_saida').value || null,
       sistema: document.getElementById('sistema').value,
-      tipo_servico: tipoServico.length > 0 ? tipoServico : null
+      tipo_servico: tipoServico.length > 0 ? tipoServico : []
     };
     const id = document.getElementById('clienteIndex').value;
+
+    // Validação de datas
+    if (cliente.data_entrada && cliente.data_saida && new Date(cliente.data_saida) < new Date(cliente.data_entrada)) {
+      showErrorToast('Data de Saída deve ser posterior à Data de Entrada.');
+      return;
+    }
 
     try {
       const method = id ? 'PUT' : 'POST';
       const url = id ? `${API_BASE_URL}/api/clientes/${id}` : `${API_BASE_URL}/api/clientes`;
+      console.log('Enviando cliente:', cliente);
       const response = await fetch(url, {
         method,
         headers: { 
@@ -413,9 +420,10 @@ function inicializarEventos() {
         renderizarClientes();
         bootstrap.Modal.getInstance(document.getElementById('clienteModal')).hide();
       } else {
-        showErrorToast(result.error || 'Erro ao salvar cliente.');
+        showErrorToast(result.error || result.details || 'Erro ao salvar cliente.');
       }
     } catch (error) {
+      console.error('Erro ao salvar cliente:', error);
       showErrorToast('Erro ao salvar cliente: ' + error.message);
     }
   });

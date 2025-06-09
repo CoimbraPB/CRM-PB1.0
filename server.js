@@ -234,6 +234,8 @@ app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (
     return res.status(400).json({ error: 'Código e nome são obrigatórios' });
   }
 
+  const tipoServicoJson = tipo_servico && Array.isArray(tipo_servico) ? tipo_servico : [];
+
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
@@ -253,14 +255,14 @@ app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (
         situacao || null, tipo_pessoa || null, estado || null, municipio || null,
         status || null, possui_ie || false, ie || null, filial || null,
         empresa_matriz || null, grupo || null, segmento || null, data_entrada || null,
-        data_saida || null, sistema || null, tipo_servico || null
+        data_saida || null, sistema || null, tipoServicoJson
       ]
     );
     console.log('POST /api/clientes:', { id: result.rows[0].id });
     res.status(201).json({ success: true, message: 'Cliente criado com sucesso', data: result.rows[0] });
   } catch (error) {
     console.error('Erro ao criar cliente:', error);
-    res.status(500).json({ error: 'Erro ao criar cliente' });
+    res.status(500).json({ error: 'Erro ao criar cliente', details: error.message });
   } finally {
     await client.end();
   }
@@ -279,6 +281,9 @@ app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), asyn
     console.log('PUT /api/clientes/:id: Campos obrigatórios ausentes', req.body);
     return res.status(400).json({ error: 'Código e nome são obrigatórios' });
   }
+
+  // Tratar tipo_servico para garantir que seja um array válido
+  const tipoServicoJson = tipo_servico && Array.isArray(tipo_servico) ? tipo_servico : [];
 
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -300,18 +305,18 @@ app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), asyn
         situacao || null, tipo_pessoa || null, estado || null, municipio || null,
         status || null, possui_ie || false, ie || null, filial || null,
         empresa_matriz || null, grupo || null, segmento || null, data_entrada || null,
-        data_saida || null, sistema || null, tipo_servico || null, id
+        data_saida || null, sistema || null, tipoServicoJson, id
       ]
     );
     if (result.rows.length === 0) {
       console.log('PUT /api/clientes/:id: Cliente não encontrado', { id });
       return res.status(404).json({ error: 'Cliente não encontrado' });
     }
-    console.log('PUT /api/clientes/:id:', { id });
+    console.log('PUT /api/clientes/:id:', { id, body: req.body });
     res.json({ success: true, message: 'Cliente atualizado com sucesso', data: result.rows[0] });
   } catch (error) {
-    console.error('Erro ao atualizar cliente:', error);
-    res.status(500).json({ error: 'Erro ao atualizar cliente' });
+    console.error('Erro ao atualizar cliente:', error, { id, body: req.body });
+    res.status(500).json({ error: 'Erro ao atualizar cliente', details: error.message });
   } finally {
     await client.end();
   }
@@ -329,6 +334,7 @@ app.post('/api/clientes/import', autenticar(['Operador', 'Gerente', 'Gestor']), 
     await client.connect();
     await client.query('BEGIN');
     for (const cliente of clientes) {
+      const tipoServicoJson = cliente.tipo_servico && Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico : [];
       await client.query(
         `INSERT INTO clientes (
           codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
@@ -362,7 +368,7 @@ app.post('/api/clientes/import', autenticar(['Operador', 'Gerente', 'Gestor']), 
           cliente.possui_ie || false, cliente.ie || null, cliente.filial || null,
           cliente.empresa_matriz || null, cliente.grupo || null, cliente.segmento || null,
           cliente.data_entrada || null, cliente.data_saida || null, cliente.sistema || null,
-          cliente.tipo_servico || null
+          tipoServicoJson
         ]
       );
     }
@@ -372,7 +378,7 @@ app.post('/api/clientes/import', autenticar(['Operador', 'Gerente', 'Gestor']), 
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Erro ao importar clientes:', error);
-    res.status(500).json({ error: 'Erro ao importar clientes' });
+    res.status(500).json({ error: 'Erro ao importar clientes', details: error.message });
   } finally {
     await client.end();
   }
@@ -397,7 +403,7 @@ app.delete('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), a
     }
   } catch (error) {
     console.error('Erro ao excluir cliente:', error);
-    res.status(500).json({ error: 'Erro ao excluir cliente' });
+    res.status(500).json({ error: 'Erro ao excluir cliente', details: error.message });
   } finally {
     await client.end();
   }
