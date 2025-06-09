@@ -107,35 +107,35 @@ async function renderizarClientes() {
     clientesPagina.forEach(cliente => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${cliente.codigo || ''}</td>
-        <td>${cliente.nome || ''}</td>
-        <td>${cliente.razao_social || ''}</td>
-        <td>${cliente.cpf_cnpj || ''}</td>
-        <td>${cliente.regime_fiscal || ''}</td>
-        <td>${cliente.situacao || ''}</td>
-        <td>${cliente.tipo_pessoa || ''}</td>
-        <td>${cliente.estado || ''}</td>
-        <td>${cliente.municipio || ''}</td>
-        <td>${cliente.status || ''}</td>
-        <td>${cliente.possui_ie || ''}</td>
-        <td>${cliente.ie || ''}</td>
-        <td>${cliente.filial || ''}</td>
-        <td>${cliente.empresa_matriz || ''}</td>
-        <td>${cliente.grupo || ''}</td>
-        <td>${cliente.segmento || ''}</td>
-        <td>${cliente.data_entrada ? cliente.data_entrada.split('T')[0] : ''}</td>
-        <td>${cliente.data_saida ? cliente.data_saida.split('T')[0] : ''}</td>
-        <td>${cliente.sistema || ''}</td>
-        <td>${Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ') : ''}</td>
-        <td>
-          <button class="btn btn-primary btn-sm me-1" onclick="editarCliente(${cliente.id})" title="Editar">
-            <i class="bi bi-pencil-fill"></i>
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="excluirCliente(${cliente.id})" title="Excluir">
-            <i class="bi bi-trash-fill"></i>
-          </button>
-        </td>
-      `;
+      <td>${cliente.codigo || ''}</td>
+      <td>${cliente.nome || ''}</td>
+      <td>${cliente.razao_social || ''}</td>
+      <td>${cliente.cpf_cnpj || ''}</td>
+      <td>${cliente.regime_fiscal || ''}</td>
+      <td>${cliente.situacao || ''}</td>
+      <td>${cliente.tipo_pessoa || ''}</td>
+      <td>${cliente.estado || ''}</td>
+      <td>${cliente.municipio || ''}</td>
+      <td>${cliente.status || ''}</td>
+      <td>${cliente.possui_ie || ''}</td>
+      <td>${cliente.ie || ''}</td>
+      <td>${cliente.filial || ''}</td>
+      <td>${cliente.empresa_matriz || ''}</td>
+      <td>${cliente.grupo || ''}</td>
+      <td>${cliente.segmento || ''}</td>
+      <td>${cliente.data_entrada ? new Date(cliente.data_entrada).toLocaleDateString('pt-BR') : ''}</td>
+      <td>${cliente.data_saida ? new Date(cliente.data_saida).toLocaleDateString('pt-BR') : ''}</td>
+      <td>${cliente.sistema || ''}</td>
+      <td>${Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ') : ''}</td>
+      <td>
+        <button class="btn btn-primary btn-sm me-1" onclick="editarCliente(${cliente.id})" title="Editar">
+          <i class="bi bi-pencil-fill"></i>
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="excluirCliente(${cliente.id})" title="Excluir">
+          <i class="bi bi-trash-fill"></i>
+        </button>
+      </td>
+    `;
       clientesBody.appendChild(tr);
     });
 
