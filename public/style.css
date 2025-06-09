@@ -99,12 +99,16 @@ body {
   }
 }
 
+.cliente-search-container {
+  position: relative;
+}
+
 .autocomplete-suggestions {
   position: absolute;
   z-index: 1050; /* Acima do modal */
   width: 100%; /* Herda a largura do campo de texto */
   max-width: 100%; /* Limita ao tamanho do container pai */
-  max-height: 150px; /* Reduzido para caber melhor no modal */
+  max-height: 150px; /* Altura ajustada para caber no modal */
   overflow-y: auto;
   display: none;
   border: 1px solid #ced4da;
@@ -123,7 +127,7 @@ body {
   overflow: hidden; /* Oculta texto que ultrapassa */
   text-overflow: ellipsis; /* Trunca com "..." */
   max-width: 100%; /* Limita a largura do item */
-  font-size: 0.9rem; /* Tamanho de fonte reduzido para compactação */
+  font-size: 0.9rem; /* Tamanho de fonte reduzido */
 }
 
 .autocomplete-suggestions .list-group-item:hover,
