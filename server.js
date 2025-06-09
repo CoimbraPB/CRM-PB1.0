@@ -130,7 +130,7 @@ app.get('/api/ocorrencias', autenticar(['Gerente']), async (req, res) => {
   try {
     await client.connect();
     const result = await client.query('SELECT * FROM ocorrencias ORDER BY data_ocorrencia DESC');
-    console.log('GET /api/crrmocs:', result.rows.length);
+    console.log('GET /api/ocorrencias:', result.rows.length);
     res.json(result.rows);
   } catch (error) {
     console.error('Erro ao listar ocorrências:', error);
@@ -140,7 +140,7 @@ app.get('/api/ocorrencias', autenticar(['Gerente']), async (req, res) => {
   }
 });
 
-// Nova Rota: Listar Ocorrências CRM
+// Rota de Ocorrências CRM
 app.get('/api/ocorrencias-crm', autenticar(['Operador', 'Gerente']), async (req, res) => {
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -164,17 +164,10 @@ app.get('/api/ocorrencias-crm', autenticar(['Operador', 'Gerente']), async (req,
   }
 });
 
-// Nova Rota: Criar Ocorrência CRM
 app.post('/api/ocorrencias-crm', autenticar(['Operador', 'Gerente']), async (req, res) => {
   const {
-    data_registro,
-    cliente_id,
-    descricao_apontamento,
-    responsavel_interno,
-    acao_tomada,
-    acompanhamento_erica_operacional,
-    data_resolucao,
-    feedback_cliente
+    data_registro, cliente_id, descricao_apontamento, responsavel_interno,
+    acao_tomada, acompanhamento_erica_operacional, data_resolucao, feedback_cliente
   } = req.body;
 
   if (!data_registro || !cliente_id || !descricao_apontamento || !responsavel_interno || !acao_tomada || !acompanhamento_erica_operacional) {
@@ -196,14 +189,8 @@ app.post('/api/ocorrencias-crm', autenticar(['Operador', 'Gerente']), async (req
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `, [
-      data_registro,
-      cliente_id,
-      descricao_apontamento,
-      responsavel_interno,
-      acao_tomada,
-      acompanhamento_erica_operacional,
-      data_resolucao || null,
-      feedback_cliente || null
+      data_registro, cliente_id, descricao_apontamento, responsavel_interno,
+      acao_tomada, acompanhamento_erica_operacional, data_resolucao || null, feedback_cliente || null
     ]);
     console.log('POST /api/ocorrencias-crm:', { id: result.rows[0].id });
     res.status(201).json({ success: true, message: 'Ocorrência criada com sucesso', data: result.rows[0] });
@@ -215,7 +202,7 @@ app.post('/api/ocorrencias-crm', autenticar(['Operador', 'Gerente']), async (req
   }
 });
 
-// Rota de Clientes (ajustada com autenticação)
+// Rota para listar clientes
 app.get('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -234,7 +221,7 @@ app.get('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (r
   }
 });
 
-// Nova Rota: Criar Cliente
+// Rota para criar cliente
 app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
   const {
     codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
@@ -264,7 +251,7 @@ app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (
       [
         codigo, nome, razao_social || null, cpf_cnpj || null, regime_fiscal || null,
         situacao || null, tipo_pessoa || null, estado || null, municipio || null,
-        status || null, possui_ie || null, ie || null, filial || null,
+        status || null, possui_ie || false, ie || null, filial || null,
         empresa_matriz || null, grupo || null, segmento || null, data_entrada || null,
         data_saida || null, sistema || null, tipo_servico || null
       ]
@@ -279,7 +266,7 @@ app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (
   }
 });
 
-// Nova Rota: Atualizar Cliente
+// Rota para atualizar cliente
 app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
   const { id } = req.params;
   const {
@@ -311,7 +298,7 @@ app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), asyn
       [
         codigo, nome, razao_social || null, cpf_cnpj || null, regime_fiscal || null,
         situacao || null, tipo_pessoa || null, estado || null, municipio || null,
-        status || null, possui_ie || null, ie || null, filial || null,
+        status || null, possui_ie || false, ie || null, filial || null,
         empresa_matriz || null, grupo || null, segmento || null, data_entrada || null,
         data_saida || null, sistema || null, tipo_servico || null, id
       ]
@@ -330,7 +317,8 @@ app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), asyn
   }
 });
 
-app.post('/api/clientes/import', async (req, res) => {
+// Rota para importar clientes
+app.post('/api/clientes/import', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
   const clientes = req.body;
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -339,6 +327,7 @@ app.post('/api/clientes/import', async (req, res) => {
 
   try {
     await client.connect();
+    await client.query('BEGIN');
     for (const cliente of clientes) {
       await client.query(
         `INSERT INTO clientes (
@@ -347,25 +336,41 @@ app.post('/api/clientes/import', async (req, res) => {
           segmento, data_entrada, data_saida, sistema, tipo_servico
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
         ON CONFLICT (codigo) DO UPDATE SET
-          nome = EXCLUDED.nome, razao_social = EXCLUDED.razao_social, cpf_cnpj = EXCLUDED.cpf_cnpj,
-          regime_fiscal = EXCLUDED.regime_fiscal, situacao = EXCLUDED.situacao,
-          tipo_pessoa = EXCLUDED.tipo_pessoa, estado = EXCLUDED.estado, municipio = EXCLUDED.municipio,
-          status = EXCLUDED.status, possui_ie = EXCLUDED.possui_ie, ie = EXCLUDED.ie,
-          filial = EXCLUDED.filial, empresa_matriz = EXCLUDED.empresa_matriz, grupo = EXCLUDED.grupo,
-          segmento = EXCLUDED.segmento, data_entrada = EXCLUDED.data_entrada, data_saida = EXCLUDED.data_saida,
-          sistema = EXCLUDED.sistema, tipo_servico = EXCLUDED.tipo_servico`,
+          nome = EXCLUDED.nome,
+          razao_social = EXCLUDED.razao_social,
+          cpf_cnpj = EXCLUDED.cpf_cnpj,
+          regime_fiscal = EXCLUDED.regime_fiscal,
+          situacao = EXCLUDED.situacao,
+          tipo_pessoa = EXCLUDED.tipo_pessoa,
+          estado = EXCLUDED.estado,
+          municipio = EXCLUDED.municipio,
+          status = EXCLUDED.status,
+          possui_ie = EXCLUDED.possui_ie,
+          ie = EXCLUDED.ie,
+          filial = EXCLUDED.filial,
+          empresa_matriz = EXCLUDED.empresa_matriz,
+          grupo = EXCLUDED.grupo,
+          segmento = EXCLUDED.segmento,
+          data_entrada = EXCLUDED.data_entrada,
+          data_saida = EXCLUDED.data_saida,
+          sistema = EXCLUDED.sistema,
+          tipo_servico = EXCLUDED.tipo_servico`,
         [
-          cliente.codigo, cliente.nome, cliente.razao_social, cliente.cpf_cnpj,
-          cliente.regime_fiscal, cliente.situacao, cliente.tipo_pessoa, cliente.estado,
-          cliente.municipio, cliente.status, cliente.possui_ie, cliente.ie, cliente.filial,
-          cliente.empresa_matriz, cliente.grupo, cliente.segmento, cliente.data_entrada,
-          cliente.data_saida, cliente.sistema, cliente.tipo_servico
+          cliente.codigo, cliente.nome, cliente.razao_social || null, cliente.cpf_cnpj || null,
+          cliente.regime_fiscal || null, cliente.situacao || null, cliente.tipo_pessoa || null,
+          cliente.estado || null, cliente.municipio || null, cliente.status || null,
+          cliente.possui_ie || false, cliente.ie || null, cliente.filial || null,
+          cliente.empresa_matriz || null, cliente.grupo || null, cliente.segmento || null,
+          cliente.data_entrada || null, cliente.data_saida || null, cliente.sistema || null,
+          cliente.tipo_servico || null
         ]
       );
     }
+    await client.query('COMMIT');
     console.log('POST /api/clientes/import:', clientes.length);
-    res.json({ success: true, message: ' clientes importados com sucesso' });
+    res.json({ success: true, message: 'Clientes importados com sucesso' });
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Erro ao importar clientes:', error);
     res.status(500).json({ error: 'Erro ao importar clientes' });
   } finally {
@@ -373,7 +378,8 @@ app.post('/api/clientes/import', async (req, res) => {
   }
 });
 
-app.delete('/api/clientes/:id', async (req, res) => {
+// Rota para excluir cliente
+app.delete('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
   const { id } = req.params;
   const client = new Client({
     connectionString: process.env.DATABASE_URL,

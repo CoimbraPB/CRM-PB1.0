@@ -1,4 +1,3 @@
-// script.js
 let clientes = [];
 let paginaAtual = 1;
 const clientesPorPagina = 10;
@@ -94,7 +93,7 @@ async function renderizarClientes() {
       (cliente.grupo || '').toLowerCase().includes(filtro) ||
       (cliente.segmento || '').toLowerCase().includes(filtro) ||
       (cliente.sistema || '').toLowerCase().includes(filtro) ||
-      (cliente.tipo_servico || []).join(', ').toLowerCase().includes(filtro)
+      (Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ') : '').toLowerCase().includes(filtro)
     );
 
     const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
@@ -123,10 +122,10 @@ async function renderizarClientes() {
         <td>${cliente.empresa_matriz || ''}</td>
         <td>${cliente.grupo || ''}</td>
         <td>${cliente.segmento || ''}</td>
-        <td>${cliente.data_entrada ? new Date(cliente.data_entrada).toLocaleDateString('pt-BR') : ''}</td>
-        <td>${cliente.data_saida ? new Date(cliente.data_saida).toLocaleDateString('pt-BR') : ''}</td>
+        <td>${cliente.data_entrada || ''}</td>
+        <td>${cliente.data_saida || ''}</td>
         <td>${cliente.sistema || ''}</td>
-        <td>${(cliente.tipo_servico || []).join(', ')}</td>
+        <td>${Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ') : ''}</td>
         <td>
           <button class="btn btn-primary btn-sm me-1" onclick="editarCliente(${cliente.id})" title="Editar">
             <i class="bi bi-pencil-fill"></i>
@@ -208,8 +207,8 @@ function abrirModal() {
   document.getElementById('clienteModalLabel').textContent = 'Adicionar Cliente';
   document.getElementById('clienteForm').reset();
   document.getElementById('clienteIndex').value = '';
-  // Limpar checkboxes de tipo de serviço
-  document.querySelectorAll('input[name="tipo_servico"]').forEach(checkbox => {
+  // Limpar checkboxes de tipo_servico
+  document.querySelectorAll('#tipo_servico input[type="checkbox"]').forEach(checkbox => {
     checkbox.checked = false;
   });
   modal.show();
@@ -240,12 +239,12 @@ function editarCliente(id) {
   document.getElementById('empresa_matriz').value = cliente.empresa_matriz || '';
   document.getElementById('grupo').value = cliente.grupo || '';
   document.getElementById('segmento').value = cliente.segmento || '';
-  document.getElementById('data_entrada').value = cliente.data_entrada ? new Date(cliente.data_entrada).toISOString().split('T')[0] : '';
-  document.getElementById('data_saida').value = cliente.data_saida ? new Date(cliente.data_saida).toISOString().split('T')[0] : '';
+  document.getElementById('data_entrada').value = cliente.data_entrada || '';
+  document.getElementById('data_saida').value = cliente.data_saida || '';
   document.getElementById('sistema').value = cliente.sistema || '';
-  // Preencher checkboxes de tipo de serviço
-  document.querySelectorAll('input[name="tipo_servico"]').forEach(checkbox => {
-    checkbox.checked = cliente.tipo_servico ? cliente.tipo_servico.includes(checkbox.value) : false;
+  // Configurar checkboxes de tipo_servico
+  document.querySelectorAll('#tipo_servico input[type="checkbox"]').forEach(checkbox => {
+    checkbox.checked = Array.isArray(cliente.tipo_servico) && cliente.tipo_servico.includes(checkbox.value);
   });
   document.getElementById('clienteIndex').value = id;
   modal.show();
@@ -289,7 +288,7 @@ function exportarPDF() {
       cliente.status || '',
       cliente.segmento || '',
       cliente.sistema || '',
-      (cliente.tipo_servico || []).join(', ')
+      Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ') : ''
     ])
   });
   doc.save('clientes.pdf');
@@ -372,18 +371,7 @@ function inicializarEventos() {
 
   clienteForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    // Validação de datas
-    const dataEntrada = document.getElementById('data_entrada').value;
-    const dataSaida = document.getElementById('data_saida').value;
-    if (dataEntrada && dataSaida && new Date(dataSaida) < new Date(dataEntrada)) {
-      showErrorToast('Data de Saída deve ser posterior à Data de Entrada.');
-      return;
-    }
-
-    // Coleta dos checkboxes de tipo de serviço
-    const tipoServico = Array.from(document.querySelectorAll('input[name="tipo_servico"]:checked')).map(checkbox => checkbox.value);
-
+    const tipoServico = Array.from(document.querySelectorAll('#tipo_servico input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
     const cliente = {
       codigo: document.getElementById('codigo').value,
       nome: document.getElementById('nome').value,
@@ -401,10 +389,10 @@ function inicializarEventos() {
       empresa_matriz: document.getElementById('empresa_matriz').value,
       grupo: document.getElementById('grupo').value,
       segmento: document.getElementById('segmento').value,
-      data_entrada: dataEntrada || null,
-      data_saida: dataSaida || null,
+      data_entrada: document.getElementById('data_entrada').value,
+      data_saida: document.getElementById('data_saida').value,
       sistema: document.getElementById('sistema').value,
-      tipo_servico: tipoServico
+      tipo_servico: tipoServico.length > 0 ? tipoServico : null
     };
     const id = document.getElementById('clienteIndex').value;
 
