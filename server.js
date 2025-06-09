@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 
 const app = express();
-const JWT_SECRET = process.env.JWT_SECRET || 'seu_segredo_aqui'; // Defina no Render
+const JWT_SECRET = process.env.JWT_SECRET || 'seu_segredo_aqui';
 
 app.use(cors({ origin: 'https://crm-pb-web.onrender.com' }));
 app.use(express.json());
@@ -81,7 +81,6 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Rota de Ocorrências (Gestor)
 app.post('/api/ocorrencias', autenticar(['Gestor']), async (req, res) => {
   const {
     data_ocorrencia, setor, descricao, cliente_impactado, valor_desconto, tipo_desconto,
@@ -140,7 +139,6 @@ app.get('/api/ocorrencias', autenticar(['Gerente']), async (req, res) => {
   }
 });
 
-// Rota de Ocorrências CRM
 app.get('/api/ocorrencias-crm', autenticar(['Operador', 'Gerente']), async (req, res) => {
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -202,7 +200,57 @@ app.post('/api/ocorrencias-crm', autenticar(['Operador', 'Gerente']), async (req
   }
 });
 
-// Rota para listar clientes
+app.put('/api/ocorrencias-crm/:id', autenticar(['Operador', 'Gerente']), async (req, res) => {
+  const { id } = req.params;
+  const {
+    data_registro, cliente_id, descricao_apontamento, responsavel_interno,
+    acao_tomada, acompanhamento_erica_operacional, data_resolucao, feedback_cliente
+  } = req.body;
+
+  if (!data_registro || !cliente_id || !descricao_apontamento || !responsavel_interno || !acao_tomada || !acompanhamento_erica_operacional) {
+    console.log('PUT /api/ocorrencias-crm/:id: Campos obrigatórios ausentes', req.body);
+    return res.status(400).json({ error: 'Campos obrigatórios ausentes' });
+  }
+
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+
+  try {
+    await client.connect();
+    const result = await client.query(`
+      UPDATE ocorrencias_crm SET
+        data_registro = $1,
+        cliente_id = $2,
+        descricao_apontamento = $3,
+        responsavel_interno = $4,
+        acao_tomada = $5,
+        acompanhamento_erica_operacional = $6,
+        data_resolucao = $7,
+        feedback_cliente = $8
+      WHERE id = $9
+      RETURNING *
+    `, [
+      data_registro, cliente_id, descricao_apontamento, responsavel_interno,
+      acao_tomada, acompanhamento_erica_operacional, data_resolucao || null, feedback_cliente || null, id
+    ]);
+
+    if (result.rows.length === 0) {
+      console.log('PUT /api/ocorrencias-crm/:id: Ocorrência não encontrada', { id });
+      return res.status(404).json({ error: 'Ocorrência não encontrada' });
+    }
+
+    console.log('PUT /api/ocorrencias-crm/:id:', { id, body: req.body });
+    res.json({ success: true, message: 'Ocorrência atualizada com sucesso', data: result.rows[0] });
+  } catch (error) {
+    console.error('Erro ao atualizar ocorrência:', error);
+    res.status(500).json({ error: 'Erro ao atualizar ocorrência', details: error.message });
+  } finally {
+    await client.end();
+  }
+});
+
 app.get('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -221,7 +269,6 @@ app.get('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (r
   }
 });
 
-// Rota para criar cliente
 app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
   const {
     codigo, nome, razao_social, cpf_cnpj, regime_fiscal, situacao, tipo_pessoa,
@@ -234,11 +281,8 @@ app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (
     return res.status(400).json({ error: 'Código e nome são obrigatórios' });
   }
 
-  // Validar formato das datas
   const dataEntradaValida = data_entrada && /^\d{4}-\d{2}-\d{2}$/.test(data_entrada) ? data_entrada : null;
   const dataSaidaValida = data_saida && /^\d{4}-\d{2}-\d{2}$/.test(data_saida) ? data_saida : null;
-
-  // Serializar tipo_servico como string JSON
   const tipoServicoJson = tipo_servico && Array.isArray(tipo_servico) ? JSON.stringify(tipo_servico) : '[]';
 
   const client = new Client({
@@ -273,7 +317,6 @@ app.post('/api/clientes', autenticar(['Operador', 'Gerente', 'Gestor']), async (
   }
 });
 
-// Rota para atualizar cliente
 app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
   const { id } = req.params;
   const {
@@ -287,11 +330,8 @@ app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), asyn
     return res.status(400).json({ error: 'Código e nome são obrigatórios' });
   }
 
-  // Validar formato das datas
   const dataEntradaValida = data_entrada && /^\d{4}-\d{2}-\d{2}$/.test(data_entrada) ? data_entrada : null;
   const dataSaidaValida = data_saida && /^\d{4}-\d{2}-\d{2}$/.test(data_saida) ? data_saida : null;
-
-  // Serializar tipo_servico como string JSON
   const tipoServicoJson = tipo_servico && Array.isArray(tipo_servico) ? JSON.stringify(tipo_servico) : '[]';
 
   const client = new Client({
@@ -331,7 +371,6 @@ app.put('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), asyn
   }
 });
 
-// Rota para importar clientes
 app.post('/api/clientes/import', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
   const clientes = req.body;
   const client = new Client({
@@ -343,13 +382,10 @@ app.post('/api/clientes/import', autenticar(['Operador', 'Gerente', 'Gestor']), 
     await client.connect();
     await client.query('BEGIN');
     for (const cliente of clientes) {
-      // Validar formato das datas
       const dataEntradaValida = cliente.data_entrada && /^\d{4}-\d{2}-\d{2}$/.test(cliente.data_entrada) ? 
         cliente.data_entrada : null;
       const dataSaidaValida = cliente.data_saida && /^\d{4}-\d{2}-\d{2}$/.test(cliente.data_saida) ? 
         cliente.data_saida : null;
-
-      // Serializar tipo_servico
       const tipoServicoJson = cliente.tipo_servico && Array.isArray(cliente.tipo_servico) ? 
         JSON.stringify(cliente.tipo_servico) : '[]';
 
@@ -401,7 +437,6 @@ app.post('/api/clientes/import', autenticar(['Operador', 'Gerente', 'Gestor']), 
   }
 });
 
-// Rota para excluir cliente
 app.delete('/api/clientes/:id', autenticar(['Operador', 'Gerente', 'Gestor']), async (req, res) => {
   const { id } = req.params;
   const client = new Client({

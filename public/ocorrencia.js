@@ -6,8 +6,7 @@ const apiBaseUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https:/
 // Função para formatar data para dd/mm/aaaa
 function formatarData(data) {
   if (!data) return '';
-  // Garante que apenas a parte da data (YYYY-MM-DD) seja usada
-  const dataStr = data.split('T')[0]; // Remove timestamp, se presente
+  const dataStr = data.split('T')[0];
   const [ano, mes, dia] = dataStr.split('-');
   if (!ano || !mes || !dia) {
     console.error('Formato de data inválido:', data);
@@ -137,6 +136,8 @@ async function renderizarOcorrencias() {
     ocorrencias.forEach(ocorrencia => {
       const cliente = clientesOcorrencias.find(c => c.id === ocorrencia.cliente_id) || { codigo: '-', nome: '-' };
       const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.addEventListener('click', () => editarOcorrencia(ocorrencia.id));
       tr.innerHTML = `
         <td>${ocorrencia.id || ''}</td>
         <td>${formatarData(ocorrencia.data_registro)}</td>
@@ -150,17 +151,47 @@ async function renderizarOcorrencias() {
       `;
       ocorrenciasBody.appendChild(tr);
     });
-    console.log('Tabela de ocorrências renderizada com sucesso');
+    console.log('T eos de ocorrências renderizada com sucesso');
   } catch (error) {
     console.error('Erro ao carregar ocorrências:', error);
     showErrorToast('Erro ao carregar ocorrências: ' + error.message);
   }
 }
 
-async function criarOcorrencia(event) {
+function abrirModalCriarOcorrencia() {
+  const modal = new bootstrap.Modal(document.getElementById('ocorrenciaModal'));
+  document.getElementById('ocorrenciaModalLabel').textContent = 'Criar Ocorrência';
+  document.getElementById('ocorrenciaForm').reset();
+  document.getElementById('ocorrenciaId').value = '';
+  document.getElementById('dataRegistro').value = getDataAtual();
+  modal.show();
+}
+
+function editarOcorrencia(id) {
+  const ocorrencia = ocorrencias.find(o => o.id === id);
+  if (!ocorrencia) {
+    showErrorToast('Ocorrência não encontrada.');
+    return;
+  }
+
+  const modal = new bootstrap.Modal(document.getElementById('ocorrenciaModal'));
+  document.getElementById('ocorrenciaModalLabel').textContent = 'Editar Ocorrência';
+  document.getElementById('ocorrenciaId').value = id;
+  document.getElementById('dataRegistro').value = ocorrencia.data_registro ? ocorrencia.data_registro.split('T')[0] : '';
+  document.getElementById('clienteId').value = ocorrencia.cliente_id || '';
+  document.getElementById('descricaoApontamento').value = ocorrencia.descricao_apontamento || '';
+  document.getElementById('responsavelInterno').value = ocorrencia.responsavel_interno || '';
+  document.getElementById('acaoTomada').value = ocorrencia.acao_tomada || '';
+  document.getElementById('acompanhamentoEricaOperacional').value = ocorrencia.acompanhamento_erica_operacional || '';
+  document.getElementById('dataResolucao').value = ocorrencia.data_resolucao ? ocorrencia.data_resolucao.split('T')[0] : '';
+  document.getElementById('feedbackCliente').value = ocorrencia.feedback_cliente || '';
+  modal.show();
+}
+
+async function salvarOcorrencia(event) {
   event.preventDefault();
-  console.log('Iniciando criação de ocorrência');
-  const form = document.getElementById('criarOcorrenciaForm');
+  console.log('Iniciando salvarOcorrencia');
+  const id = document.getElementById('ocorrenciaId').value;
   const dataRegistro = document.getElementById('dataRegistro').value;
   const clienteId = document.getElementById('clienteId').value;
   const descricaoApontamento = document.getElementById('descricaoApontamento').value.trim();
@@ -176,44 +207,48 @@ async function criarOcorrencia(event) {
     return;
   }
 
+  const ocorrenciaData = {
+    data_registro: dataRegistro,
+    cliente_id: parseInt(clienteId),
+    descricao_apontamento: descricaoApontamento,
+    responsavel_interno: responsavelInterno,
+    acao_tomada: acaoTomada,
+    acompanhamento_erica_operacional: acompanhamentoEricaOperacional,
+    data_resolucao: dataResolucao || null,
+    feedback_cliente: feedbackCliente || null
+  };
+
   try {
     const token = localStorage.getItem('token');
-    console.log('Token para POST /api/ocorrencias-crm:', token ? 'Presente' : 'Ausente');
-    const response = await fetch(`${apiBaseUrl}/api/ocorrencias-crm`, {
-      method: 'POST',
+    console.log('Token para salvar ocorrência:', token ? 'Presente' : 'Ausente');
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `${apiBaseUrl}/api/ocorrencias-crm/${id}` : `${apiBaseUrl}/api/ocorrencias-crm`;
+    console.log('Enviando requisição:', method, url, ocorrenciaData);
+    const response = await fetch(url, {
+      method,
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        data_registro: dataRegistro,
-        cliente_id: parseInt(clienteId),
-        descricao_apontamento: descricaoApontamento,
-        responsavel_interno: responsavelInterno,
-        acao_tomada: acaoTomada,
-        acompanhamento_erica_operacional: acompanhamentoEricaOperacional,
-        data_resolucao: dataResolucao || null,
-        feedback_cliente: feedbackCliente || null
-      })
+      body: JSON.stringify(ocorrenciaData)
     });
 
-    console.log('Resposta POST /api/ocorrencias-crm:', response.status, response.statusText);
+    console.log('Resposta salvar ocorrência:', response.status, response.statusText);
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(`HTTP error! Status: ${response.status}, Mensagem: ${errorData.error || 'Desconhecida'}`);
     }
 
-    showSuccessToast('Ocorrência criada com sucesso!');
-    const modal = bootstrap.Modal.getInstance(document.getElementById('criarOcorrenciaModal'));
+    showSuccessToast(id ? 'Ocorrência atualizada com sucesso!' : 'Ocorrência criada com sucesso!');
+    const modal = bootstrap.Modal.getInstance(document.getElementById('ocorrenciaModal'));
     modal.hide();
-    form.reset();
+    document.getElementById('ocorrenciaForm').reset();
     document.getElementById('dataRegistro').value = getDataAtual();
-    await popularClientes(); // Recarrega clientes para garantir sincronia
     await renderizarOcorrencias();
-    console.log('Ocorrência criada e tabela atualizada');
+    console.log('Ocorrência salva e tabela atualizada');
   } catch (error) {
-    console.error('Erro ao criar ocorrência:', error);
-    showErrorToast('Erro ao criar ocorrência: ' + error.message);
+    console.error('Erro ao salvar ocorrência:', error);
+    showErrorToast('Erro ao salvar ocorrência: ' + error.message);
   }
 }
 
@@ -231,16 +266,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  const form = document.getElementById('criarOcorrenciaForm');
+  const form = document.getElementById('ocorrenciaForm');
   const dataRegistroInput = document.getElementById('dataRegistro');
-  if (form && dataRegistroInput) {
+  const criarOcorrenciaBtn = document.querySelector('button[data-bs-target="#ocorrenciaModal"]');
+  if (form && dataRegistroInput && criarOcorrenciaBtn) {
     dataRegistroInput.value = getDataAtual();
-    form.addEventListener('submit', criarOcorrencia);
-    console.log('Formulário inicializado');
+    form.addEventListener('submit', salvarOcorrencia);
+    criarOcorrenciaBtn.addEventListener('click', abrirModalCriarOcorrencia);
+    console.log('Formulário e botão inicializados');
   } else {
-    console.error('Formulário ou campo dataRegistro não encontrado:', { form, dataRegistroInput });
+    console.error('Elementos não encontrados:', { form, dataRegistroInput, criarOcorrenciaBtn });
   }
 
-  await popularClientes(); // Carrega clientes primeiro
-  await renderizarOcorrencias(); // Renderiza ocorrências depois
+  await popularClientes();
+  await renderizarOcorrencias();
 });
