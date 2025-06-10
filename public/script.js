@@ -74,11 +74,12 @@ function showFilterDropdown(column, icon) {
   const values = getUniqueValues(column);
   if (values.length === 0) return;
 
+  const rect = icon.getBoundingClientRect();
   const dropdown = document.createElement('div');
   dropdown.className = 'dropdown-menu filter-dropdown show';
   dropdown.style.position = 'absolute';
-  dropdown.style.left = `${icon.offsetLeft}px`;
-  dropdown.style.top = `${icon.offsetTop + icon.offsetHeight}px`;
+  dropdown.style.left = `${rect.left + window.scrollX}px`;
+  dropdown.style.top = `${rect.bottom + window.scrollY}px`;
   dropdown.innerHTML = `
     <div class="dropdown-item p-0">
       <select class="form-select" id="filter-${column}">
@@ -87,7 +88,7 @@ function showFilterDropdown(column, icon) {
       </select>
     </div>
   `;
-  icon.parentElement.appendChild(dropdown);
+  document.body.appendChild(dropdown);
 
   const select = dropdown.querySelector('select');
   select.value = filtrosAtivos[column] || '';
@@ -177,19 +178,18 @@ async function renderizarClientes() {
       }
     });
 
-    const hasFilters = Object.values(filtrosAtivos).some(val => val !== null) || filtro;
-    const totalPaginas = hasFilters ? 1 : Math.ceil(clientesFiltrados.length / clientesPorPagina);
-    paginaAtual = hasFilters ? 1 : Math.min(paginaAtual, totalPaginas || 1);
+    const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
+    paginaAtual = Math.min(paginaAtual, totalPaginas || 1);
 
-    const inicio = hasFilters ? 0 : (paginaAtual - 1) * clientesPorPagina;
-    const fim = hasFilters ? clientesFiltrados.length : inicio + clientesPorPagina;
+    const inicio = (paginaAtual - 1) * clientesPorPagina;
+    const fim = inicio + clientesPorPagina;
     const clientesPagina = clientesFiltrados.slice(inicio, fim);
 
     clientesPagina.forEach(cliente => {
       const tr = document.createElement('tr');
       tr.style.cursor = 'pointer';
       tr.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('filter-icon')) {
+        if (!e.target.closest('.filter-icon') && !e.target.closest('.btn-danger')) {
           editarCliente(cliente.id);
         }
       });
@@ -214,7 +214,7 @@ async function renderizarClientes() {
         <td>${cliente.data_saida ? cliente.data_saida.substring(0, 10).split('-').reverse().join('/') : ''}</td>
         <td>${cliente.sistema || ''}</td>
         <td>${Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ') : ''}</td>
-        <td>
+        <td class="fixed-action">
           <button class="btn btn-danger btn-sm" onclick="excluirCliente(${cliente.id})" title="Excluir">
             <i class="bi bi-trash-fill"></i>
           </button>
@@ -223,7 +223,7 @@ async function renderizarClientes() {
       clientesBody.appendChild(tr);
     });
 
-    paginacaoInfo.textContent = hasFilters ? `Mostrando ${clientesFiltrados.length} clientes` : `Página ${paginaAtual} de ${totalPaginas} (${clientesFiltrados.length} clientes)`;
+    paginacaoInfo.textContent = `Página ${paginaAtual} de ${totalPaginas} (${clientesFiltrados.length} clientes)`;
   } catch (error) {
     console.error('Erro ao carregar clientes:', error);
     showErrorToast('Erro ao carregar clientes: ' + error.message);
@@ -422,7 +422,7 @@ function irParaPaginaAnterior() {
 }
 
 function irParaProximaPagina() {
-  const totalPaginas = Math.ceil(clientes.length / clientesPorPagina);
+  const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
   if (paginaAtual < totalPaginas) {
     paginaAtual++;
     renderizarClientes();
@@ -430,7 +430,7 @@ function irParaProximaPagina() {
 }
 
 function irParaUltimaPagina() {
-  const totalPaginas = Math.ceil(clientes.length / clientesPorPagina);
+  const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
   paginaAtual = totalPaginas || 1;
   renderizarClientes();
 }

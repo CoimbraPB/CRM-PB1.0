@@ -49,6 +49,13 @@ body {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+.fixed-action {
+  position: sticky;
+  right: 0;
+  background-color: #ffffff;
+  z-index: 1;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+}
 ::-webkit-scrollbar {
   height: 8px;
   width: 8px;
@@ -79,6 +86,7 @@ body {
 .filter-dropdown {
   min-width: 200px;
   padding: 0.5rem;
+  z-index: 1050;
 }
 .filter-dropdown .form-select {
   font-size: 0.9rem;

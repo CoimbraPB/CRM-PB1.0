@@ -17,26 +17,39 @@
     </div>
   </nav>
   
-  <div class="container mt-4">
-    <h2>Cadastro de Clientes</h2>
-    <div class="row mb-3">
-      <div class="col-md-4">
-        <div class="input-group">
-          <input type="text" class="form-control" id="filtroInput" placeholder="Filtrar clientes...">
-          <button class="btn btn-outline-secondary" id="limparFiltros" title="Limpar Filtros">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-      </div>
-      <div class="col-md-8 text-end">
-        <button class="btn btn-primary me-2" onclick="abrirModal()">Adicionar Cliente</button>
-        <label class="btn btn-secondary me-2">
-          Importar Clientes
-          <input type="file" id="fileInput" accept=".json" hidden>
-        </label>
-        <button class="btn btn-success me-2" onclick="exportarPDF()">Exportar PDF</button>
-        <button class="btn btn-info" onclick="exportarJSON()">Exportar JSON</button>
-      </div>
+  <div class="container mt-8 max-w-7xl mx-auto px-4">
+    <h1 class="text-3xl font-extrabold text-gray-900 mb-6">Cadastro de Clientes</h1>
+
+    <div class="flex flex-wrap items-center mb-4 gap-3">
+      <button class="btn btn-success flex items-center gap-2" onclick="abrirModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Adicionar Cliente
+      </button>
+
+      <button class="btn btn-primary flex items-center gap-2" onclick="document.getElementById('fileInput').click()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-input"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
+        Importar Clientes
+      </button>
+      <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="importarClientes(this.files)" />
+
+      <button class="btn btn-danger flex items-center gap-2" onclick="exportarPDF()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-down"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
+        Exportar PDF
+      </button>
+
+      <button class="btn btn-warning flex items-center gap-2" onclick="exportarJSON()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-json-2"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/><path d="M14 2v4a2 2 0  /><0  /><2  /><2  /><h4 /><h4/><path d="M4 12a"/><path d="M8 18a2 2 0 2 1 0 1-1v-1a1 1 0 1-1 0-1v-1a1 1 0 0 0-1-1"/></svg>
+        Exportar JSON
+      </button>
+
+      <input type="form-control rounded-md border border-gray-300 px-3 py-2 w-full max-w-xs" id="filtroInput" placeholder="Buscar cliente..." oninput="filtrarClientes()" />
+
+      <button class="btn btn-secondary flex items-center gap-2" id="limparFiltros" title="Limpar Filtros">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        Limpar Filtros
+      </button>
     </div>
 
     <div class="table-container">
@@ -63,7 +76,7 @@
             <th>Data de Saída</th>
             <th>Sistema <i class="bi bi-funnel ms-1 filter-icon" data-column="sistema"></i></th>
             <th>Tipo de Serviço</th>
-            <th>Ações</th>
+            <th class="fixed-action">Ações</th>
           </tr>
         </thead>
         <tbody id="clientesBody"></tbody>
@@ -321,7 +334,7 @@
       </div>
     </div>
   </div>
-
+  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js"></script>
