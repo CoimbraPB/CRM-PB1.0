@@ -69,6 +69,20 @@ body {
   align-items: center;
   font-size: 0.9rem;
 }
+.filter-icon {
+  cursor: pointer;
+  color: #6b7280;
+}
+.filter-icon.text-success {
+  color: #10b981;
+}
+.filter-dropdown {
+  min-width: 200px;
+  padding: 0.5rem;
+}
+.filter-dropdown .form-select {
+  font-size: 0.9rem;
+}
 /* Estilo para a coluna fixa de Ações apenas na tabela de clientes */
 .clientes-table th:last-child,
 .clientes-table td:last-child {

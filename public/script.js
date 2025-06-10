@@ -1,6 +1,14 @@
 let clientes = [];
 let paginaAtual = 1;
 const clientesPorPagina = 10;
+let filtrosAtivos = {
+  regime_fiscal: null,
+  situacao: null,
+  estado: null,
+  status: null,
+  segmento: null,
+  sistema: null
+};
 
 function renderNavbar() {
   console.log('Rendering navbar');
@@ -54,6 +62,73 @@ function logout() {
   window.location.href = 'login.html';
 }
 
+function getUniqueValues(field) {
+  const values = [...new Set(clientes.map(cliente => cliente[field]).filter(val => val !== null && val !== ''))];
+  return values.sort();
+}
+
+function showFilterDropdown(column, icon) {
+  const existingDropdown = document.querySelector('.filter-dropdown');
+  if (existingDropdown) existingDropdown.remove();
+
+  const values = getUniqueValues(column);
+  if (values.length === 0) return;
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'dropdown-menu filter-dropdown show';
+  dropdown.style.position = 'absolute';
+  dropdown.style.left = `${icon.offsetLeft}px`;
+  dropdown.style.top = `${icon.offsetTop + icon.offsetHeight}px`;
+  dropdown.innerHTML = `
+    <div class="dropdown-item p-0">
+      <select class="form-select" id="filter-${column}">
+        <option value="">Selecione</option>
+        ${values.map(value => `<option value="${value}">${value}</option>`).join('')}
+      </select>
+    </div>
+  `;
+  icon.parentElement.appendChild(dropdown);
+
+  const select = dropdown.querySelector('select');
+  select.value = filtrosAtivos[column] || '';
+  select.focus();
+
+  select.addEventListener('change', () => {
+    filtrosAtivos[column] = select.value || null;
+    dropdown.remove();
+    updateFilterIcons();
+    renderizarClientes();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!dropdown.contains(e.target) && e.target !== icon) {
+      dropdown.remove();
+    }
+  }, { once: true });
+}
+
+function updateFilterIcons() {
+  document.querySelectorAll('.filter-icon').forEach(icon => {
+    const column = icon.dataset.column;
+    icon.classList.toggle('text-success', filtrosAtivos[column]);
+  });
+}
+
+function limparFiltros() {
+  filtrosAtivos = {
+    regime_fiscal: null,
+    situacao: null,
+    estado: null,
+    status: null,
+    segmento: null,
+    sistema: null
+  };
+  const filtroInput = document.getElementById('filtroInput');
+  if (filtroInput) filtroInput.value = '';
+  updateFilterIcons();
+  renderizarClientes();
+}
+
 async function renderizarClientes() {
   console.log('Rendering clients');
   const clientesBody = document.getElementById('clientesBody');
@@ -82,7 +157,7 @@ async function renderizarClientes() {
     clientesBody.innerHTML = '';
     const filtroInput = document.getElementById('filtroInput');
     const filtro = filtroInput ? filtroInput.value.toLowerCase() : '';
-    const clientesFiltrados = clientes.filter(cliente => 
+    let clientesFiltrados = clientes.filter(cliente => 
       (cliente.codigo || '').toLowerCase().includes(filtro) ||
       (cliente.nome || '').toLowerCase().includes(filtro) ||
       (cliente.razao_social || '').toLowerCase().includes(filtro) ||
@@ -96,19 +171,27 @@ async function renderizarClientes() {
       (Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ').toLowerCase().includes(filtro) : '')
     );
 
-    const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
-    paginaAtual = Math.min(paginaAtual, totalPaginas || 1);
+    Object.keys(filtrosAtivos).forEach(column => {
+      if (filtrosAtivos[column]) {
+        clientesFiltrados = clientesFiltrados.filter(cliente => cliente[column] === filtrosAtivos[column]);
+      }
+    });
 
-    const inicio = (paginaAtual - 1) * clientesPorPagina;
-    const fim = inicio + clientesPorPagina;
+    const hasFilters = Object.values(filtrosAtivos).some(val => val !== null) || filtro;
+    const totalPaginas = hasFilters ? 1 : Math.ceil(clientesFiltrados.length / clientesPorPagina);
+    paginaAtual = hasFilters ? 1 : Math.min(paginaAtual, totalPaginas || 1);
+
+    const inicio = hasFilters ? 0 : (paginaAtual - 1) * clientesPorPagina;
+    const fim = hasFilters ? clientesFiltrados.length : inicio + clientesPorPagina;
     const clientesPagina = clientesFiltrados.slice(inicio, fim);
 
     clientesPagina.forEach(cliente => {
       const tr = document.createElement('tr');
       tr.style.cursor = 'pointer';
       tr.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-danger')) return;
-        editarCliente(cliente.id);
+        if (!e.target.classList.contains('filter-icon')) {
+          editarCliente(cliente.id);
+        }
       });
       tr.innerHTML = `
         <td>${cliente.codigo || ''}</td>
@@ -140,14 +223,13 @@ async function renderizarClientes() {
       clientesBody.appendChild(tr);
     });
 
-    paginacaoInfo.textContent = `Página ${paginaAtual} de ${totalPaginas} (${clientesFiltrados.length} clientes)`;
+    paginacaoInfo.textContent = hasFilters ? `Mostrando ${clientesFiltrados.length} clientes` : `Página ${paginaAtual} de ${totalPaginas} (${clientesFiltrados.length} clientes)`;
   } catch (error) {
     console.error('Erro ao carregar clientes:', error);
     showErrorToast('Erro ao carregar clientes: ' + error.message);
   }
 }
 
-// Restante do script.js permanece inalterado...
 function importarClientes(files) {
   if (files.length === 0) return;
   
@@ -253,17 +335,12 @@ function editarCliente(id) {
   const hasCombinado = tipoServico.includes('Escrita Fiscal') && 
                       tipoServico.includes('Contábil') && 
                       tipoServico.includes('Departamento Pessoal');
-  const hasCombinado2 = tipoServico.includes('Escrita Fiscal') && 
-                        tipoServico.includes('Contábil') && 
-                        !tipoServico.includes('Departamento Pessoal');
   if (hasCombinado) {
     document.getElementById('tipo_servico_combinado').checked = true;
-  } else if (hasCombinado2) {
-    document.getElementById('tipo_servico_combinado2').checked = true;
   }
   tipoServico.forEach(servico => {
     const checkbox = document.querySelector(`#tipo_servico input[value="${servico}"]`);
-    if (checkbox && !hasCombinado && !hasCombinado2) {
+    if (checkbox && !hasCombinado) {
       checkbox.checked = true;
     }
   });
@@ -376,11 +453,13 @@ function inicializarEventos() {
   const filtroInput = document.getElementById('filtroInput');
   const fileInput = document.getElementById('fileInput');
   const clienteForm = document.getElementById('clienteForm');
+  const limparFiltrosBtn = document.getElementById('limparFiltros');
 
   const missingElements = [];
   if (!filtroInput) missingElements.push('filtroInput');
   if (!fileInput) missingElements.push('fileInput');
   if (!clienteForm) missingElements.push('clienteForm');
+  if (!limparFiltrosBtn) missingElements.push('limparFiltros');
 
   if (missingElements.length > 0) {
     console.error('Elementos DOM faltando:', missingElements);
@@ -390,6 +469,14 @@ function inicializarEventos() {
 
   filtroInput.addEventListener('input', filtrarClientes);
   fileInput.addEventListener('change', (e) => importarClientes(e.target.files));
+  limparFiltrosBtn.addEventListener('click', limparFiltros);
+
+  document.querySelectorAll('.filter-icon').forEach(icon => {
+    icon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showFilterDropdown(icon.dataset.column, icon);
+    });
+  });
 
   clienteForm.addEventListener('submit', async (e) => {
     e.preventDefault();
