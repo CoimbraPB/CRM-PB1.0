@@ -338,12 +338,17 @@ function editarCliente(id) {
   const hasCombinado = tipoServico.includes('Escrita Fiscal') && 
                       tipoServico.includes('Contábil') && 
                       tipoServico.includes('Departamento Pessoal');
+  const hasCombinado2 = tipoServico.includes('Escrita Fiscal') && 
+                        tipoServico.includes('Contábil') && 
+                        !tipoServico.includes('Departamento Pessoal');
   if (hasCombinado) {
     document.getElementById('tipo_servico_combinado').checked = true;
+  } else if (hasCombinado2) {
+    document.getElementById('tipo_servico_combinado2').checked = true;
   }
   tipoServico.forEach(servico => {
     const checkbox = document.querySelector(`#tipo_servico input[value="${servico}"]`);
-    if (checkbox && !hasCombinado) {
+    if (checkbox && !hasCombinado && !hasCombinado2) {
       checkbox.checked = true;
     }
   });
