@@ -15,37 +15,47 @@
       <div class="ms-auto d-flex gap-3" id="navbarLinks"></div>
     </div>
   </nav>
-
-  <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <div id="contadorCasosAbertos" class="badge bg-primary fs-6 p-2">Casos em Aberto: 0</div>
-      <h2>Ocorrências CRM</h2>
-    </div>
-
-    <div class="mb-3">
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ocorrenciaModal">Criar Ocorrência</button>
-
-      <input type="text" id="filtroInput" placeholder="Buscar por cliente ou ID..." 
-        class="form-control rounded-md border border-gray-300 px-3 py-2 w-full max-w-xs"
-        oninput="filtrarOcorrencias()" />
-    </div>
-
-    <div class="table-container">
-      <table class="table table-striped table-bordered">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Título da Descrição</th>
-            <th>Cliente</th>
-            <th>Data de Registro</th>
-            <th>Data de Resolução</th>
-          </tr>
-        </thead>
-        <tbody id="ocorrenciasBody"></tbody>
-      </table>
+  
+<div class="container mt-4">
+  <div class="d-flex justify-content-end align-items-center mb-3">
+    <div id="contadorCasosAbertos" class="badge bg-primary fs-6 p-2">
+      Casos em Aberto: 0
     </div>
   </div>
+  <h2>Ocorrências CRM</h2>
+  <div class="mb-3">
+    <button
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#ocorrenciaModal"
+    >
+      Criar Ocorrência
+    </button>
 
+    <input
+      type="text"
+      id="filtroInput"
+      placeholder="Buscar por cliente ou ID..."
+      class="form-control rounded-md border border-gray-300 px-3 py-2 w-full max-w-xs"
+      oninput="filtrarOcorrencias()"
+    />
+  </div>
+
+  <div class="table-container">
+    <table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Título da Descrição</th>
+          <th>Cliente</th>
+          <th>Data de Registro</th>
+          <th>Data de Resolução</th>
+        </tr>
+      </thead>
+      <tbody id="ocorrenciasBody"></tbody>
+    </table>
+  </div>
+</div>
 
   <div class="modal fade" id="ocorrenciaModal" tabindex="-1" aria-labelledby="ocorrenciaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
