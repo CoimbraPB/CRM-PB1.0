@@ -17,12 +17,15 @@
   </nav>
 
   <div class="container mt-4">
-    <div id="contadorCasosAbertos" class="badge bg-primary fs-6 p-2">Casos em Aberto: 0</div>
-    <h2>Ocorrências CRM</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div id="contadorCasosAbertos" class="badge bg-primary fs-6 p-2">Casos em Aberto: 0</div>
+      <h2>Ocorrências CRM</h2>
+    </div>
+
     <div class="mb-3">
       <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ocorrenciaModal">Criar Ocorrência</button>
 
-        <input type="text" id="filtroInput" placeholder="Buscar por cliente ou ID..." 
+      <input type="text" id="filtroInput" placeholder="Buscar por cliente ou ID..." 
         class="form-control rounded-md border border-gray-300 px-3 py-2 w-full max-w-xs"
         oninput="filtrarOcorrencias()" />
     </div>
@@ -42,6 +45,7 @@
       </table>
     </div>
   </div>
+
 
   <div class="modal fade" id="ocorrenciaModal" tabindex="-1" aria-labelledby="ocorrenciaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
