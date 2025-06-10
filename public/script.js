@@ -377,7 +377,7 @@ function excluirCliente(id) {
 
 function exportarPDF() {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+  const doc = new jsPDF({ orientation: 'landscape' });
   doc.text('Lista de Clientes Filtrados', 20, 10);
   doc.autoTable({
     head: [['Código', 'Nome', 'Razão Social', 'CPF/CNPJ', 'Estado', 'Status', 'Segmento', 'Sistema', 'Tipo de Serviço']],
