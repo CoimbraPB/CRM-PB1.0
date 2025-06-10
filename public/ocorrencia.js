@@ -81,6 +81,13 @@ async function popularClientes() {
       throw new Error(`HTTP error! Status: ${response.status}, Mensagem: ${errorData.error || 'Desconhecida'}`);
     }
     clientesOcorrencias = await response.json();
+
+    const contadorCasosAbertos = document.getElementById('contadorCasosAbertos');
+    if (contadorCasosAbertos) {
+      const casosAbertos = ocorrencias.filter(ocorrencia => !ocorrencia.data_resolucao).length;
+      contadorCasosAbertos.textContent = `Casos em Aberto: ${casosAbertos}`;
+    }
+    
     console.log('Clientes recebidos:', clientesOcorrencias.length, clientesOcorrencias);
   } catch (error) {
     console.error('Erro ao carregar clientes:', error);
@@ -197,13 +204,6 @@ function editarOcorrencia(id) {
 }
 
 
-const contadorCasosAbertos = document.getElementById('contadorCasosAbertos');
-    if (contadorCasosAbertos) {
-      const casosAbertos = ocorrencias.filter(ocorrencia => !ocorrencia.data_resolucao).length;
-      contadorCasosAbertos.textContent = `Casos em Aberto: ${casosAbertos}`;
-    }
-
-    
 async function salvarOcorrencia(event) {
   event.preventDefault();
   console.log('Iniciando salvarOcorrencia');
