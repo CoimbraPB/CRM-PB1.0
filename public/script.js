@@ -378,13 +378,14 @@ function excluirCliente(id) {
 function exportarPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  doc.text('Lista de Clientes', 20, 10);
+  doc.text('Lista de Clientes Filtrados', 20, 10);
   doc.autoTable({
     head: [['Código', 'Nome', 'Razão Social', 'CPF/CNPJ', 'Estado', 'Status', 'Segmento', 'Sistema', 'Tipo de Serviço']],
-    body: clientes.map(cliente => [
+    body: (window.clientesFiltrados || clientes).map(cliente => [
       cliente.codigo || '',
       cliente.nome || '',
       cliente.razao_social || '',
+      cliente.cpf_cnpj || '',
       cliente.estado || '',
       cliente.status || '',
       cliente.segmento || '',
@@ -392,7 +393,7 @@ function exportarPDF() {
       Array.isArray(cliente.tipo_servico) ? cliente.tipo_servico.join(', ') : ''
     ])
   });
-  doc.save('clientes.pdf');
+  doc.save('clientes_filtrados.pdf');
 }
 
 function exportarJSON() {
