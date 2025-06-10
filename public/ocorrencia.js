@@ -196,6 +196,14 @@ function editarOcorrencia(id) {
   modal.show();
 }
 
+
+const contadorCasosAbertos = document.getElementById('contadorCasosAbertos');
+    if (contadorCasosAbertos) {
+      const casosAbertos = ocorrencias.filter(ocorrencia => !ocorrencia.data_resolucao).length;
+      contadorCasosAbertos.textContent = `Casos em Aberto: ${casosAbertos}`;
+    }
+
+    
 async function salvarOcorrencia(event) {
   event.preventDefault();
   console.log('Iniciando salvarOcorrencia');
