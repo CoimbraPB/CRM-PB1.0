@@ -20,6 +20,10 @@
     <h2>Ocorrências CRM</h2>
     <div class="mb-3">
       <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ocorrenciaModal">Criar Ocorrência</button>
+
+        <input type="text" id="filtroInput" placeholder="Buscar por cliente ou ID..." 
+        class="form-control rounded-md border border-gray-300 px-3 py-2 w-full max-w-xs"
+        oninput="filtrarOcorrencias()" />
     </div>
 
     <div class="table-container">

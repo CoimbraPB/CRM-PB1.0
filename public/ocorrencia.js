@@ -129,7 +129,16 @@ async function renderizarOcorrencias() {
     console.log('Ocorrencias recebidas:', ocorrencias.length, ocorrencias);
 
     ocorrenciasBody.innerHTML = '';
-    ocorrencias.forEach(ocorrencia => {
+    const filtroInput = document.getElementById('filtroInput');
+    const filtro = filtroInput ? filtroInput.value.toLowerCase() : '';
+    const ocorrenciasFiltradas = ocorrencias.filter(ocorrencia => {
+      const cliente = clientesOcorrencias.find(c => c.id === ocorrencia.cliente_id) || { codigo: '', nome: '' };
+      return ocorrencia.id.toString().includes(filtro) ||
+             cliente.nome.toLowerCase().includes(filtro) ||
+             cliente.codigo.toLowerCase().includes(filtro);
+    });
+
+    ocorrenciasFiltradas.forEach(ocorrencia => {
       const cliente = clientesOcorrencias.find(c => c.id === ocorrencia.cliente_id) || { codigo: '-', nome: '-' };
       const tr = document.createElement('tr');
       tr.style.cursor = 'pointer';
@@ -295,6 +304,10 @@ function mostrarSugestoesClientes(termo) {
   suggestionsContainer.style.display = 'block';
 }
 
+function filtrarOcorrencias() {
+  renderizarOcorrencias();
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('Inicializando ocorrencia.js');
   console.log('API_BASE_URL:', apiBaseUrl);
@@ -315,8 +328,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const criarOcorrenciaBtn = document.querySelector('button[data-bs-target="#ocorrenciaModal"]');
   const cancelarBtn = document.getElementById('cancelarOcorrencia');
   const suggestionsContainer = document.getElementById('clienteSuggestions');
+  const filtroInput = document.getElementById('filtroInput');
 
-  if (form && dataRegistroInput && clienteSearchInput && criarOcorrenciaBtn && cancelarBtn && suggestionsContainer) {
+  if (form && dataRegistroInput && clienteSearchInput && criarOcorrenciaBtn && cancelarBtn && suggestionsContainer && filtroInput) {
     dataRegistroInput.value = getDataAtual();
     form.addEventListener('submit', salvarOcorrencia);
     criarOcorrenciaBtn.addEventListener('click', abrirModal);
@@ -364,9 +378,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       suggestionsContainer.style.display = 'none';
     });
 
+    // Evento para o filtro
+    filtroInput.addEventListener('input', filtrarOcorrencias);
+
     console.log('Formulário e botões inicializados');
   } else {
-    console.error('Elementos não encontrados:', { form, dataRegistroInput, clienteSearchInput, criarOcorrenciaBtn, cancelarBtn, suggestionsContainer });
+    console.error('Elementos não encontrados:', { form, dataRegistroInput, clienteSearchInput, criarOcorrenciaBtn, cancelarBtn, suggestionsContainer, filtroInput });
   }
 
   await popularClientes();
