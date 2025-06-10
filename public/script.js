@@ -224,6 +224,9 @@ async function renderizarClientes() {
     });
 
     paginacaoInfo.textContent = `Página ${paginaAtual} de ${totalPaginas} (${clientesFiltrados.length} clientes)`;
+
+    // Armazenar clientesFiltrados globalmente para uso nas funções de paginação
+    window.clientesFiltrados = clientesFiltrados;
   } catch (error) {
     console.error('Erro ao carregar clientes:', error);
     showErrorToast('Erro ao carregar clientes: ' + error.message);
@@ -382,7 +385,6 @@ function exportarPDF() {
       cliente.codigo || '',
       cliente.nome || '',
       cliente.razao_social || '',
-      cliente.cpf_cnpj || '',
       cliente.estado || '',
       cliente.status || '',
       cliente.segmento || '',
@@ -422,7 +424,8 @@ function irParaPaginaAnterior() {
 }
 
 function irParaProximaPagina() {
-  const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
+  if (!window.clientesFiltrados) return;
+  const totalPaginas = Math.ceil(window.clientesFiltrados.length / clientesPorPagina);
   if (paginaAtual < totalPaginas) {
     paginaAtual++;
     renderizarClientes();
@@ -430,7 +433,8 @@ function irParaProximaPagina() {
 }
 
 function irParaUltimaPagina() {
-  const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
+  if (!window.clientesFiltrados) return;
+  const totalPaginas = Math.ceil(window.clientesFiltrados.length / clientesPorPagina);
   paginaAtual = totalPaginas || 1;
   renderizarClientes();
 }

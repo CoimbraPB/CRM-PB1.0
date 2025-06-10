@@ -44,7 +44,9 @@
         Exportar JSON
       </button>
 
-      <input type="form-control rounded-md border border-gray-300 px-3 py-2 w-full max-w-xs" id="filtroInput" placeholder="Buscar cliente..." oninput="filtrarClientes()" />
+      <input type="text" id="filtroInput" placeholder="Buscar cliente..." 
+        class="form-control rounded-md border border-gray-300 px-3 py-2 w-full max-w-xs"
+        oninput="filtrarClientes()" />
 
       <button class="btn btn-secondary flex items-center gap-2" id="limparFiltros" title="Limpar Filtros">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
